@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Le Book Ultime - Portefeuille d'Applications Territoriales</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <span class="material-icons-round logo-icon">auto_stories</span>
+                <div class="logo-text">
+                    <h2>Le Book Ultime</h2>
+                    <span class="version-tag">CNFPT IA Edition</span>
+                </div>
+            </div>
+
+            <div class="search-box">
+                <span class="material-icons-round search-icon">search</span>
+                <input type="text" id="app-search" placeholder="Rechercher une application..." oninput="filterApps()">
+            </div>
+
+            <nav class="nav-menu">
+                <!-- Group 1 -->
+                <div class="nav-group">
+                    <span class="group-title">COLLABORATIF & ÉLUS</span>
+                    <ul class="app-list">
+                        <li class="app-item active" onclick="selectApp(this)" 
+                            data-src="Source book/Outils_Elus-main/index.html" 
+                            data-title="EluConnect (Modulaire)" 
+                            data-desc="Plateforme complète de collaboration pour les élus et services techniques. Coffre-fort numérique Zero-Knowledge et moteur RAG d'aide à la décision."
+                            data-tech="HTML5, CSS3, JS Module, RAG local, Cryptographie WebCrypto"
+                            data-login="Identifiants : admin@admin.com (ou autre) | Mot de passe : MAJA00">
+                            <span class="material-icons-round app-icon">security</span>
+                            <div class="app-details">
+                                <span class="app-name">EluConnect (Complet)</span>
+                                <span class="app-badge">Zero-Knowledge</span>
+                            </div>
+                        </li>
+                        <li class="app-item" onclick="selectApp(this)" 
+                            data-src="Source book/Outils élus/index.html" 
+                            data-title="EluConnect (Prototype)" 
+                            data-desc="Prototype monolithique simplifié d'EluConnect intégrant la gestion des commissions, sujets de conseil et la reconnaissance de caractères (OCR) locale."
+                            data-tech="Vanilla HTML, CSS, app.js monolithique, Tesseract OCR"
+                            data-login="Identifiants : admin (ou autre) | Mot de passe : MAJA00">
+                            <span class="material-icons-round app-icon">account_balance</span>
+                            <div class="app-details">
+                                <span class="app-name">EluConnect (Simplifié)</span>
+                                <span class="app-badge">Prototype</span>
+                            </div>
+                        </li>
+                        <li class="app-item" onclick="selectApp(this)" 
+                            data-src="Source book/Réservation matériel pédagogique/index.html" 
+                            data-title="Réservation Matériel" 
+                            data-desc="Application de planification et de réservation d'équipements pédagogiques pour la Communauté de Communes Marches du Velay Rochebaron."
+                            data-tech="HTML5, CSS, LocalStorage CRUD"
+                            data-login="Code d'entrée global : CCMVR2026 | Administration : admin / MAJA00">
+                            <span class="material-icons-round app-icon">calendar_today</span>
+                            <div class="app-details">
+                                <span class="app-name">Réservation Matériel</span>
+                                <span class="app-badge">LocalStorage</span>
+                            </div>
+                        </li>
+                        <li class="app-item" onclick="selectApp(this)" 
+                            data-src="Source book/Trombinoscope CCMVR/index.html" 
+                            data-title="Trombinoscope Élus" 
+                            data-desc="Trombinoscope interactif des élus communautaires de la CCMVR 2026-2032 intégrant un filtre par commune et par délégation."
+                            data-tech="HTML5, CSS, JS, Données anonymisées"
+                            data-login="Données publiques fictives (Noms et photos entièrement anonymisés)">
+                            <span class="material-icons-round app-icon">groups</span>
+                            <div class="app-details">
+                                <span class="app-name">Trombinoscope Élus</span>
+                                <span class="app-badge">Statique</span>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Group 2 -->
+                <div class="nav-group">
+                    <span class="group-title">PILOTAGE & FINANCES</span>
+                    <ul class="app-list">
+                        <li class="app-item" onclick="selectApp(this)" 
+                            data-src="Source book/Plan de mandat/index.html" 
+                            data-title="Plan de Mandat" 
+                            data-desc="Outil d'aide au pilotage et de suivi des actions du plan de mandat. Gestion des axes stratégiques, des élus référents et des plannings."
+                            data-tech="Vue.js, LocalStorage, CSS"
+                            data-login="Aucun mot de passe requis (Gestionnaire local autonome)">
+                            <span class="material-icons-round app-icon">assignment</span>
+                            <div class="app-details">
+                                <span class="app-name">Plan de Mandat</span>
+                                <span class="app-badge">Vue.js</span>
+                            </div>
+                        </li>
+                        <li class="app-item" onclick="selectApp(this)" 
+                            data-src="Source book/Subventions 2026 présentation/index.html" 
+                            data-title="Subventions 2026" 
+                            data-desc="Simulateur de dotation et présentation de subventions 2026 aux associations du territoire par commune et par catégorie."
+                            data-tech="HTML5, CSS, JS, Données anonymisées"
+                            data-login="Filtre et outil de simulation interactifs (Données structures anonymisées)">
+                            <span class="material-icons-round app-icon">euro</span>
+                            <div class="app-details">
+                                <span class="app-name">Subventions 2026</span>
+                                <span class="app-badge">Simulation</span>
+                            </div>
+                        </li>
+                        <li class="app-item" onclick="selectApp(this)" 
+                            data-src="Source book/Cartographie plan de mandat avec écoles/index.html" 
+                            data-title="Cartographie Écoles" 
+                            data-desc="Carte interactive et géolocalisation des structures enfance-jeunesse et des écoles du territoire."
+                            data-tech="Leaflet.js, boundaries, JS, GPS fonctionnel"
+                            data-login="Visualisation géographique interactive (Structures anonymisées)">
+                            <span class="material-icons-round app-icon">map</span>
+                            <div class="app-details">
+                                <span class="app-name">Cartographie Écoles</span>
+                                <span class="app-badge">Carto</span>
+                            </div>
+                        </li>
+                        <li class="app-item" onclick="selectApp(this)" 
+                            data-src="Source book/MAM 2/index.html" 
+                            data-title="MAM Manager" 
+                            data-desc="Gestion d'une Maison d'Assistantes Maternelles (MAM) avec planification de présence, contrats de travail et génération de codes dynamiques."
+                            data-tech="React, TailwindCSS, Babel in-browser"
+                            data-login="Mot de passe d'administration des codes : MAJA00">
+                            <span class="material-icons-round app-icon">child_care</span>
+                            <div class="app-details">
+                                <span class="app-name">MAM Manager</span>
+                                <span class="app-badge">React</span>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Group 3 -->
+                <div class="nav-group">
+                    <span class="group-title">IA & FORMATION CNFPT</span>
+                    <ul class="app-list">
+                        <li class="app-item" onclick="selectApp(this)" 
+                            data-src="Source book/Sondage-IA-CAPEV-main/index.html" 
+                            data-title="Sondage IA CNFPT" 
+                            data-desc="Sondage interactif en temps réel conçu pour les formations IA du CNFPT, avec génération dynamique de nuages de mots et graphes."
+                            data-tech="Chart.js, Supabase Mock, Realtime local"
+                            data-login="Administration du sondage : Cliquez sur le cadenas secret (Mot de passe : MAJA00)">
+                            <span class="material-icons-round app-icon">analytics</span>
+                            <div class="app-details">
+                                <span class="app-name">Sondage IA CNFPT</span>
+                                <span class="app-badge">Temps Réel</span>
+                            </div>
+                        </li>
+                        <li class="app-item" onclick="selectApp(this)" 
+                            data-src="Source book/Scrap CCMVR/index.html" 
+                            data-title="Scraping & OCR Python" 
+                            data-desc="Console web de simulation de scraping et OCR financier sur le SIREN CCMVR. Lecteur de code Python intégré."
+                            data-tech="HTML5, CSS, Chart.js, Console log simulator"
+                            data-login="Simulation interactive (Visualisez le fonctionnement du script local)">
+                            <span class="material-icons-round app-icon">terminal</span>
+                            <div class="app-details">
+                                <span class="app-name">Scraping & OCR</span>
+                                <span class="app-badge">Python Sim</span>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <p>Créé par M. Jacquiot</p>
+                <span>© 2026 - Libre de diffusion</span>
+            </div>
+        </aside>
+
+        <!-- Main Viewport Area -->
+        <main class="viewport">
+            <header class="viewport-header">
+                <div class="app-meta">
+                    <h1 id="active-title">EluConnect (Complet)</h1>
+                    <p id="active-desc" class="text-muted">Plateforme complète de collaboration pour les élus et services techniques. Coffre-fort numérique Zero-Knowledge et moteur RAG d'aide à la décision.</p>
+                </div>
+                
+                <!-- Demo info drawer -->
+                <div class="demo-info" id="active-login-info">
+                    <span class="material-icons-round info-icon">vpn_key</span>
+                    <div>
+                        <strong>Identifiants Démo</strong>
+                        <p id="active-login-text">Identifiants : admin@admin.com | Mot de passe : MAJA00</p>
+                    </div>
+                </div>
+
+                <div class="header-actions">
+                    <span id="active-tech-tag" class="tech-tag">HTML5, CSS3, JS Module, RAG local, Cryptographie WebCrypto</span>
+                    <div class="actions-group">
+                        <button class="btn btn-icon" onclick="reloadIframe()" title="Rafraîchir l'application">
+                            <span class="material-icons-round">refresh</span>
+                        </button>
+                        <button class="btn btn-icon" onclick="openNewWindow()" title="Ouvrir dans un nouvel onglet">
+                            <span class="material-icons-round">open_in_new</span>
+                        </button>
+                        <button class="btn btn-icon" onclick="toggleFullscreen()" title="Plein écran">
+                            <span class="material-icons-round">fullscreen</span>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Container for the iframe -->
+            <div class="iframe-container" id="iframe-container">
+                <iframe id="app-iframe" src="Source book/Outils_Elus-main/index.html"></iframe>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Set first app as default on load
+        window.addEventListener('DOMContentLoaded', () => {
+            const firstApp = document.querySelector('.app-item.active');
+            if (firstApp) {
+                updateHeader(firstApp);
+            }
+        });
+
+        function selectApp(element) {
+            // Remove active class from all items
+            document.querySelectorAll('.app-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            // Add active class to clicked item
+            element.classList.add('active');
+            
+            // Update iframe src
+            const iframe = document.getElementById('app-iframe');
+            iframe.src = element.dataset.src;
+            
+            // Update Header Meta
+            updateHeader(element);
+        }
+
+        function updateHeader(element) {
+            document.getElementById('active-title').textContent = element.dataset.title;
+            document.getElementById('active-desc').textContent = element.dataset.desc;
+            document.getElementById('active-tech-tag').textContent = element.dataset.tech;
+            
+            const loginInfo = element.dataset.login;
+            const infoBox = document.getElementById('active-login-info');
+            
+            if (loginInfo) {
+                infoBox.style.display = 'flex';
+                document.getElementById('active-login-text').textContent = loginInfo;
+            } else {
+                infoBox.style.display = 'none';
+            }
+        }
+
+        function reloadIframe() {
+            const iframe = document.getElementById('app-iframe');
+            iframe.src = iframe.src;
+        }
+
+        function openNewWindow() {
+            const iframe = document.getElementById('app-iframe');
+            window.open(iframe.src, '_blank');
+        }
+
+        function toggleFullscreen() {
+            const container = document.getElementById('iframe-container');
+            if (!document.fullscreenElement) {
+                container.requestFullscreen().catch(err => {
+                    alert(`Impossible de basculer en plein écran : ${err.message}`);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        function filterApps() {
+            const query = document.getElementById('app-search').value.toLowerCase();
+            const appItems = document.querySelectorAll('.app-item');
+            
+            appItems.forEach(item => {
+                const name = item.querySelector('.app-name').textContent.toLowerCase();
+                const desc = item.dataset.desc.toLowerCase();
+                
+                if (name.includes(query) || desc.includes(query)) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+
+            // Adjust Group Title Visibility
+            document.querySelectorAll('.nav-group').forEach(group => {
+                const visibleApps = group.querySelectorAll('.app-item[style=\"display: flex;\"], .app-item:not([style])');
+                const title = group.querySelector('.group-title');
+                if (visibleApps.length === 0) {
+                    title.style.display = 'none';
+                } else {
+                    title.style.display = 'block';
+                }
+            });
+        }
+    </script>
+</body>
+</html>
