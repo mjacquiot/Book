@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Note de Synthèse - Subventions Pôle Enfance Jeunesse Solidarité 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --primary-light: #eff6ff;
+            --secondary: #0d9488;
+            --secondary-light: #f0fdfa;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --bg-main: #f3f4f6;
+            --bg-card: #ffffff;
+            --border: #e5e7eb;
+            --accent-red: #ef4444;
+            --bg-red-light: #fef2f2;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            --radius: 12px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            line-height: 1.35;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1120px;
+            margin: 0 auto;
+        }
+
+        .no-print-toolbar {
+            background: var(--bg-card);
+            padding: 10px 20px;
+            border-radius: var(--radius);
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover {
+            background-color: #172554;
+            transform: translateY(-1px);
+        }
+
+        /* Landscape Page Layout (compact padding to prevent overflow) */
+        .page {
+            background: var(--bg-card);
+            padding: 20px 30px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 25px;
+            border: 1px solid var(--border);
+            position: relative;
+            width: 100%;
+            min-height: 195mm; /* A4 landscape height limit */
+            page-break-after: always;
+        }
+        
+        .page:last-child {
+            page-break-after: avoid;
+        }
+
+        h1, h2, h3, h4 {
+            font-family: 'Outfit', sans-serif;
+            color: var(--primary);
+        }
+
+        /* Header block with Logo */
+        .memo-header {
+            border-bottom: 3px solid var(--primary);
+            padding-bottom: 8px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-img {
+            max-height: 48px;
+            object-fit: contain;
+        }
+
+        .memo-badge {
+            background: var(--primary-light);
+            color: var(--primary);
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: inline-block;
+            margin-bottom: 2px;
+        }
+
+        .memo-title {
+            font-size: 1.6rem;
+            font-weight: 800;
+            line-height: 1.1;
+        }
+
+        .memo-meta {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            background: #f8fafc;
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            font-size: 0.8rem;
+            margin-bottom: 12px;
+        }
+
+        .meta-item strong {
+            color: var(--primary);
+        }
+
+        /* Content Sections */
+        .executive-summary {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--primary);
+            background: var(--primary-light);
+            padding: 8px 12px;
+            border-radius: 8px;
+            border-left: 5px solid var(--primary);
+            margin-bottom: 12px;
+            line-height: 1.4;
+            text-align: justify;
+        }
+
+        .layout-grid {
+            display: grid;
+            grid-template-columns: 3.1fr 1.9fr;
+            gap: 15px;
+        }
+
+        .section-title {
+            font-size: 0.98rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 3px;
+        }
+
+        p {
+            margin-bottom: 6px;
+            text-align: justify;
+            font-size: 0.78rem;
+            color: #374151;
+        }
+
+        /* Rules grid - Landscape fits 3 columns easily */
+        .rules-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .rule-card {
+            border: 1px solid var(--border);
+            padding: 8px 10px;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+
+        .rule-card h4 {
+            font-size: 0.78rem;
+            font-weight: 700;
+            margin-bottom: 3px;
+            color: var(--secondary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .rule-card .base-badge {
+            background: var(--secondary-light);
+            color: var(--secondary);
+            font-size: 0.65rem;
+            padding: 1px 4px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .rule-card p {
+            font-size: 0.7rem;
+            color: #4b5563;
+            margin-bottom: 0;
+            text-align: left;
+            line-height: 1.3;
+        }
+
+        /* Exceptional Decisions Box */
+        .decisions-box {
+            background: #fffbeb;
+            border: 1px solid #fef3c7;
+            border-left: 5px solid #d97706;
+            padding: 10px 12px;
+            border-radius: 8px;
+        }
+
+        .decisions-box h4 {
+            color: #b45309;
+            font-size: 0.85rem;
+            margin-bottom: 4px;
+            font-weight: 700;
+        }
+
+        .decisions-box ul {
+            padding-left: 12px;
+            font-size: 0.72rem;
+            color: #78350f;
+            line-height: 1.35;
+        }
+
+        .decisions-box li {
+            margin-bottom: 2px;
+        }
+
+        /* Table Style */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.71rem;
+            margin-top: 8px;
+            border: 1px solid var(--border);
+        }
+
+        th {
+            background-color: var(--primary);
+            color: white;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            text-align: left;
+            padding: 6px 8px;
+            font-size: 0.74rem;
+        }
+
+        td {
+            padding: 5px 8px;
+            border-bottom: 1px solid var(--border);
+            color: #374151;
+            vertical-align: middle;
+        }
+
+        tr:nth-child(even) td {
+            background-color: #f8fafc;
+        }
+
+        tr.total-row td {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            background-color: var(--primary-light) !important;
+            color: var(--primary);
+            font-size: 0.75rem;
+            border-top: 2px solid var(--primary);
+            border-bottom: 2px solid var(--primary);
+        }
+
+        /* Keep numeric figures on a single line */
+        .num {
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+            white-space: nowrap;
+        }
+
+        .bold {
+            font-weight: 600;
+        }
+
+        .font-small {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+        }
+
+        /* Signatures block */
+        .signatures {
+            margin-top: 15px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .sig-block {
+            width: 240px;
+            text-align: center;
+            border-top: 1px solid var(--border);
+            padding-top: 6px;
+        }
+
+        /* Print Setup Landscape */
+        @media print {
+            @page {
+                size: A4 landscape;
+                margin: 6mm 8mm;
+            }
+            body {
+                background: white;
+                padding: 0;
+                color: black;
+            }
+            .container {
+                max-width: 100%;
+                width: 100%;
+            }
+            .no-print-toolbar {
+                display: none !important;
+            }
+            .page {
+                box-shadow: none !important;
+                border: none !important;
+                padding: 0 !important;
+                margin: 0 0 10mm 0 !important;
+                min-height: auto;
+                page-break-after: always;
+                page-break-inside: avoid;
+            }
+            .page:last-child {
+                page-break-after: avoid;
+                margin-bottom: 0 !important;
+            }
+            table {
+                border: 1px solid #9ca3af;
+            }
+            th {
+                background-color: #1e3a8a !important;
+                color: white !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            tr.total-row td {
+                background-color: #eff6ff !important;
+                color: #1e3a8a !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .rule-card {
+                background: #f9fafb !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .memo-meta {
+                background: #f8fafc !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .decisions-box {
+                background: #fffbeb !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .envelope-summary-box {
+                background-color: #eff6ff !important;
+                border-color: #bfdbfe !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+
+        <!-- NO PRINT TOOLBAR -->
+        <div class="no-print-toolbar">
+            <div>
+                <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--primary);">Note de Synthèse Paysage - Pôle Enfance Jeunesse Solidarité</h3>
+                <p style="font-size: 0.75rem; margin: 0; color: var(--text-muted);">Suivi de l'enveloppe cible et crédit disponible intégré en page 2.</p>
+            </div>
+            <div style="display: flex; gap: 15px; align-items: center;">
+                <button class="btn" onclick="window.print()">
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                    </svg>
+                    Imprimer / PDF
+                </button>
+            </div>
+        </div>
+
+        <!-- PAGE 1: MEMO & CALCULATION BASES (LANDSCAPE) -->
+        <div class="page">
+            <div class="memo-header">
+                <div class="header-left">
+                    <img src="logo.png" alt="Logo" class="logo-img" onerror="this.style.display='none'">
+                    <div>
+                        <span class="memo-badge">Note de synthèse</span>
+                        <h1 class="memo-title">Attribution des Subventions 2026</h1>
+                    </div>
+                </div>
+                <div style="text-align: right; font-family: 'Outfit', sans-serif; font-size: 0.72rem; color: var(--text-muted); font-weight: 600;">
+                    Pôle Enfance Jeunesse Solidarité
+                </div>
+            </div>
+            
+            <div class="memo-meta">
+                <div class="meta-item"><strong>Destinataire :</strong> Madame Jocelyne DUPLAIN, Présidente</div>
+                <div class="meta-item"><strong>Date :</strong> 18 Juin 2026</div>
+                <div class="meta-item"><strong>Expéditeur :</strong> Maxime JACQUIOT</div>
+                <div class="meta-item"><strong>Objet :</strong> Justification des calculs et arbitrages 2026</div>
+            </div>
+
+            <div class="executive-summary">
+                La subvention finale combine un socle fixe cofinancé et une part variable liée à l'activité réelle (heures 2025), plafonnée à la demande. Les arbitrages de la Commission répondent de manière ciblée aux besoins exceptionnels.
+            </div>
+
+            <!-- Rules of calculation: FULL WIDTH -->
+            <h3 class="section-title">
+                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="display:inline; vertical-align:middle; margin-right:4px;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                Règles de Calcul Générales (Base + Activité)
+            </h3>
+            
+            <div class="formula-box" style="background: var(--primary-light); color: var(--primary); padding: 5px 10px; border-radius: 6px; font-weight: 600; font-size: 0.74rem; margin-bottom: 8px; text-align: center; border: 1px solid #bfdbfe;">
+                Subvention Neutre = Socle Fixe [Base] + Part Activité [Variable] — le tout plafonné à la demande initiale
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 20px; margin-bottom: 12px;">
+                <div>
+                    <h4 style="color: var(--primary); font-size: 0.76rem; border-bottom: 2px solid var(--primary); padding-bottom: 2px; margin-bottom: 5px;">1. Socle Fixe (Cofinancement 1/3 à 22 €/h : 1/3 CAF, 1/3 Familles, 1/3 Collectivité)</h4>
+                    <ul style="list-style: none; font-size: 0.66rem; line-height: 1.4; color: #374151;">
+                        <li style="margin-bottom: 2px;"><strong>Crèches :</strong> 2 agents × 50h × 47 sem. à 22 €/h ÷ 3 = <span style="float:right; font-weight: 700; color: var(--secondary);">34 467 €</span></li>
+                        <li style="margin-bottom: 2px;"><strong>ALSH Péri. :</strong> 2 agents × 8h × 36 sem. à 22 €/h ÷ 3 = <span style="float:right; font-weight: 700; color: var(--secondary);">4 224 € / crén.</span></li>
+                        <li style="margin-bottom: 2px;"><strong>ALSH Mer. :</strong> 2 agents × 10h × 36 sem. à 22 €/h ÷ 3 = <span style="float:right; font-weight: 700; color: var(--secondary);">5 280 €</span></li>
+                        <li style="margin-bottom: 2px;"><strong>ALSH Vac. :</strong> 2 agents × 50h × 13 sem. à 22 €/h ÷ 3 = <span style="float:right; font-weight: 700; color: var(--secondary);">9 533 €</span></li>
+                        <li style="margin-bottom: 2px;"><strong>Ados (Soirée) :</strong> 1 agent × 2h × 36 sem. à 22 €/h ÷ 3 = <span style="float:right; font-weight: 700; color: var(--secondary);">528 €</span></li>
+                        <li style="margin-bottom: 2px;"><strong>Ados (Vacances) :</strong> 2 agents × 5h × 13 sem. à 22 €/h ÷ 3 = <span style="float:right; font-weight: 700; color: var(--secondary);">1 906,67 €</span></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 style="color: var(--primary); font-size: 0.76rem; border-bottom: 2px solid var(--primary); padding-bottom: 2px; margin-bottom: 5px;">2. Part Activité (Heures 2025 valorisées)</h4>
+                    <ul style="list-style: none; font-size: 0.66rem; line-height: 1.4; color: #374151;">
+                        <li style="margin-bottom: 2px;"><strong>Crèches :</strong> De <strong>2,40 €/h à 2,70 €/h</strong> (dégressif selon taille ; minoré à 1,63 €/h à La Chapelle).</li>
+                        <li style="margin-bottom: 2px;"><strong>ALSH Périscolaire :</strong> De <strong>1,05 €/h à 2,00 €/h</strong> selon volume d'heures.</li>
+                        <li style="margin-bottom: 2px;"><strong>ALSH Mercredis :</strong> De <strong>1,10 €/h à 2,10 €/h</strong> selon volume d'heures.</li>
+                        <li style="margin-bottom: 2px;"><strong>ALSH Vacances :</strong> De <strong>1,42 €/h à 2,40 €/h</strong> (comprenant transports et sorties).</li>
+                        <li style="margin-bottom: 2px;"><strong>Accueils Ados :</strong> De <strong>3,00 €/h à 5,00 €/h</strong> (frais de sorties spécifiques).</li>
+                        <li style="margin-bottom: 2px;"><strong>RPE & Ludothèques :</strong> Parité CAF perçue (<strong>70 %</strong> pour RPE ; <strong>100 %</strong> pour Ludothèque Ricochet).</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Commission Arbitrages: FULL WIDTH -->
+            <h3 class="section-title" style="margin-top: 5px;">
+                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="display:inline; vertical-align:middle; margin-right:4px;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 100 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
+                Arbitrages de la Commission (Aides)
+            </h3>
+            
+            <div class="decisions-box" style="padding: 6px 10px; margin-bottom: 12px;">
+                <ul style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px 15px; list-style: none; font-size: 0.66rem; line-height: 1.3;">
+                    <li>• <strong>Crèche Toboggan :</strong> <strong>+5 641 €</strong> (soutien trésorerie)</li>
+                    <li>• <strong>ALSH Oxygène :</strong> <strong>+10 000 €</strong> (bus périscolaire)</li>
+                    <li>• <strong>ALSH La Magie :</strong> <strong>-10 000 €</strong> (ajustement trésorerie)</li>
+                    <li>• <strong>Club Jeunesse :</strong> <strong>+12 000 €</strong> (loyer du lycée)</li>
+                    <li>• <strong>Les têtes en l'air :</strong> <strong>+3 000 €</strong> (soutien financier)</li>
+                    <li>• <strong>Planet'air (Ados) :</strong> <strong>+13 000 €</strong> (démarrage d'activité)</li>
+                    <li style="grid-column: span 2;">• <strong>ACIJA (PIJ) :</strong> <strong>-740 €</strong> (en attente conformité admin.)</li>
+                </ul>
+            </div>
+
+            <div class="signatures">
+                <div class="sig-block">
+                    Maxime JACQUIOT<br>Pôle Enfance Jeunesse Solidarité
+                </div>
+                <div class="sig-block">
+                    Jocelyne DUPLAIN<br>Présidente de la collectivité
+                </div>
+            </div>
+        </div>
+
+        <!-- PAGE 2: CONSOLIDATED FINANCIAL TABLE (LANDSCAPE) -->
+        <div class="page">
+            <div class="table-title-block">
+                <h2 style="font-size: 1.5rem; font-weight: 800;">Résultats Votés & Arbitrages Financiers par Association</h2>
+                <div class="table-subtitle">Consolidation des subventions et répartition des aides exceptionnelles décidées en commission - Budget 2026</div>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Commune</th>
+                        <th>Association / Structure</th>
+                        <th>Secteurs d'Activité</th>
+                        <th class="num">Demandé 2026</th>
+                        <th class="num">Prop. Tech.</th>
+                        <th class="num">Arbitrage Comm.</th>
+                        <th class="num">Subv. Finale 2026</th>
+                        <th>Motif de l'Arbitrage / Ajustement (Aides Exceptionnelles)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="bold">Saint-Julien-sur-Loire</span></td>
+                        <td><span class="bold">ACIJA / CLAS</span></td>
+                        <td><span class="font-small">Autres</span></td>
+                        <td class="num">24 575,00 €</td>
+                        <td class="num">20 020,00 €</td>
+                        <td class="num" style="color: inherit; font-weight: normal">-</td>
+                        <td class="num bold" style="color: var(--primary);">20 020,00 €</td>
+                        <td style="font-size: 0.68rem; font-weight: normal; color: inherit;"></td>
+                    </tr>
+                    <tr>
+                        <td><span class="bold">Saint-Julien-sur-Loire</span></td>
+                        <td><span class="bold">ACIJA / PAEJ</span></td>
+                        <td><span class="font-small">Autres</span></td>
+                        <td class="num">14 200,00 €</td>
+                        <td class="num">14 200,00 €</td>
+                        <td class="num" style="color: inherit; font-weight: normal">-</td>
+                        <td class="num bold" style="color: var(--primary);">14 200,00 €</td>
+                        <td style="font-size: 0.68rem; font-weight: normal; color: inherit;"></td>
+                    </tr>
+                    <tr style="background-color: #fffdf5;">
+                        <td><span class="bold">Saint-Julien-sur-Loire</span></td>
+                        <td><span class="bold">ACIJA / PIJ, Eurodesk et Guid'assos</span></td>
+                        <td><span class="font-small">Autres</span></td>
+                        <td class="num">41 225,00 €</td>
+                        <td class="num">20 020,00 €</td>
+                        <td class="num" style="color: var(--accent-red); font-weight: 600">-740,00 €</td>
+                        <td class="num bold" style="color: var(--primary);">19 280,00 €</td>
+                        <td style="font-size: 0.68rem; font-weight: 500; color: #92400e;">Autres : Blocage des financements sur la base des 50% d'avance en attendant plus de transparence financière et juridique</td>
+                    </tr>
+                    <tr>
+                        <td><span class="bold">Saint-Julien-sur-Loire</span></td>
+                        <td><span class="bold">ADIL</span></td>
+                        <td><span class="font-small">Autres</span></td>
+                        <td class="num">3 454,00 €</td>
+                        <td class="num">3 454,00 €</td>
+                        <td class="num" style="color: inherit; font-weight: normal">-</td>
+                        <td class="num bold" style="color: var(--primary);">3 454,00 €</td>
+                        <td style="font-size: 0.68rem; font-weight: normal; color: inherit;"></td>
+                    </tr>
+                    <tr>
+                        <td><span class="bold">Mireval-sur-Loire</span></td>
+                        <td><span class="bold">ALSH Arc en Jeux</span></td>
+                        <td><span class="font-small">ALSH Péri, ALSH Merc., ALSH Vac.</span></td>
+                        <td class="num">187 000,00 €</td>
+                        <td class="num">141 497,85 €</td>
+                        <td class="num" style="color: inherit; font-weight: normal">-</td>
+                        <td class="num bold" style="color: var(--primary);">141 497,85 €</td>
+                        <td style="font-size: 0.68rem; font-weight: normal; color: inherit;"></td>
+                    </tr>
+                    <tr>
+                        <td><span class="bold">Saint-Julien-sur-Loire</span></td>
+                        <td><span class="bold">ALSH Le Beauvoir</span></td>
+                        <td><span class="font-small">ALSH Péri, ALSH Merc., ALSH Vac.</span></td>
+                        <td class="num">178 000,00 €</td>
+                        <td class="num">178 000,00 €</td>
+                        <td class="num" style="color: inherit; font-weight: normal">-</td>
+                        <td class="num bold" style="color: var(--primary);">178 000,00 €</td>
+                        <td style="font-size: 0.68rem; font-weight: normal; color: inherit;"></td>
+                    </tr>
+                    <tr style="background-color: #fffdf5;">
+                        <td><span class="bold">Chalencon-les-Pins</span></td>
+                        <td><span class="bold">ALSH Les têtes en l'air</span></td>
+                        <td><span class="font-small">ALSH Merc., ALSH Vac.</span></td>
+                        <td class="num">53 000,00 €</td>
+                        <td class="num">47 589,46 €</td>
+                        <td class="num" style="color: var(--secondary); font-weight: 600">+3 000,00 €</td>
+                        <td class="num bold" style="color: var(--primary);">50 589,46 €</td>
+                        <td style="font-size: 0.68rem; font-weight: 500; color: #92400e;">ALSH Vac. : Soutien financier vis-àvis des efforts réalisés</td>
+                    </tr>
+                    <tr>
+                        <td><span class="bold">Saint-Julien-sur-Loire</span></td>
+                        <td><span class="bold">CIDFF / prévention et actions droit des femmes</span></td>
+                        <td><span class="font-small">Autres</span></td>
+                        <td class="num">1 500,00 €</td>
+                        <td class="num">-</td>
+                        <td class="num" style="color: inherit; font-weight: normal">-</td>
+                        <td class="num bold" style="color: var(--primary);">0,00 €</td>
+                        <td style="font-size: 0.68rem; font-weight: normal; color: inherit;"></td>
+                    </tr>
+                    <tr>
+                        <td><span class="bold">Saint-Pierre-des-Monts</span></td>
+                        <td><span class="bold">Cap Evasion</span></td>
+                        <td><span class="font-small">ALSH Péri, ALSH Merc., ALSH Vac., Ados</span></td>
+                        <td class="num">82 825,00 €</td>
+                        <td class="num">81 347,75 €</td>
+                        <td class="num" style="color: inherit; font-weight: normal">-</td>
+                        <td class="num bold" style="color: var(--primary);">81 347,75 €</td>
+                        <td style="font-size: 0.68rem; font-weight: normal; color: inherit;"></td>
+                    </tr>
+                    <tr style="background-color: #fffdf5;">
+                        <td><span class="bold">Saint-Julien-sur-Loire</span></td>
+                        <td><span class="bold">Club Jeunesse</span></td>
+                        <td><span class="font-small">ALSH Vac.</span></td>
+                        <td class="num">59 200,00 €</td>
+                        <td class="num">37 818,82 €</td>
+                        <td class="num" style="color: var(--secondary); font-weight: 600">+12 000,00 €</td>
+                        <td class="num bold" style="color: var(--primary);">49 818,82 €</td>
+                        <td style="font-size: 0.68rem; font-weight: 500; color: #92400e;">ALSH Vac. : Aide pour payer le loyer du lycée</td>
+                    </tr>
+                    <tr>
+                        <td><span class="bold">Saint-Pierre-des-Monts</span></td>
+                        <td><span class="bold">Crèche Au royaume des lutins</span></td>
+                        <td><span class="font-small">Crèche</span></td>
+                        <td class="num">93 300,00 €</td>
+                        <td class="num">93 300,00 €</td>
+                        <td class="num" style="color: inherit; font-weight: normal">-</td>
+                        <td class="num bold" style="color: var(--primary);">93 300,00 €</td>
+                        <td style="font-size: 0.68rem; font-weight: normal; color: inherit;"></td>
+                    </tr>
+                    <tr>
+                        <td><span class="bold">Saint-Julien-sur-Loire</span></td>
+                        <td><span class="bold">Crèche Les Marmousets</span></td>
+                        <td><span class="font-small">Crèche</span></td>
+                        <td class="num">177 500,00 €</td>
+                        <td class="num">170 452,95 €</td>
+                        <td class="num" style="color: inherit; font-weight: normal">-</td>
+                        <td class="num bold" style="color: var(--primary);">170 452,95 €</td>
+                        <td style="font-size: 0.68rem; font-weight: normal; color: inherit;"></td>
+                    </tr>
+                    <tr>
+                        <td><span class="bold">Saint-Paul-en-Forez</span></td>
+                        <td><span class="bold">Crèche Pirouette</span></td>
+                        <td><span class="font-small">Crèche</span></td>
+                        <td class="num">147 200,00 €</td>
+                        <td class="num">103 128,45 €</td>
+                        <td class="num" style="color: inherit; font-weight: normal">-</td>
+                        <td class="num bold" style="color: var(--primary);">103 128,45 €</td>
+                        <td style="font-size: 0.68rem; font-weight: normal; color: inherit;"></td>
+                    </tr>
+                    <tr style="background-color: #fffdf5;">
+                        <td><span class="bold">Sainte-Agathe</span></td>
+                        <td><span class="bold">Crèche Toboggan</span></td>
+                        <td><span class="font-small">Crèche</span></td>
+                        <td class="num">170 000,00 €</td>
+                        <td class="num">159 358,73 €</td>
+                        <td class="num" style="color: var(--secondary); font-weight: 600">+5 641,00 €</td>
+                        <td class="num bold" style="color: var(--primary);">164 999,73 €</td>
+                        <td style="font-size: 0.68rem; font-weight: 500; color: #92400e;">Crèche : Aide pour remonter la trésorerie</td>
+                    </tr>
+                    <tr>
+                        <td><span class="bold">La Chapelle-Saint-Jean</span></td>
+                        <td><span class="bold">Echap' toi</span></td>
+                        <td><span class="font-small">Crèche, ALSH Péri, ALSH Merc., ALSH Vac., Ados</span></td>
+                        <td class="num">187 315,00 €</td>
+                        <td class="num">152 643,24 €</td>
+                        <td class="num" style="color: inherit; font-weight: normal">-</td>
+                        <td class="num bold" style="color: var(--primary);">152 643,24 €</td>
+                        <td style="font-size: 0.68rem; font-weight: normal; color: inherit;"></td>
+                    </tr>
+                    <tr>
+                        <td><span class="bold">Saint-Julien-sur-Loire</span></td>
+                        <td><span class="bold">Justice et partage</span></td>
+                        <td><span class="font-small">Autres</span></td>
+                        <td class="num">1 000,00 €</td>
+                        <td class="num">1 000,00 €</td>
+                        <td class="num" style="color: inherit; font-weight: normal">-</td>
+                        <td class="num bold" style="color: var(--primary);">1 000,00 €</td>
+                        <td style="font-size: 0.68rem; font-weight: normal; color: inherit;"></td>
+                    </tr>
+                    <tr>
+                        <td><span class="bold">Intercommunal</span></td>
+                        <td><span class="bold">L'accueil (ADAAFAM)</span></td>
+                        <td><span class="font-small">Autres</span></td>
+                        <td class="num">500,00 €</td>
+                        <td class="num">-</td>
+                        <td class="num" style="color: inherit; font-weight: normal">-</td>
+                        <td class="num bold" style="color: var(--primary);">0,00 €</td>
+                        <td style="font-size: 0.68rem; font-weight: normal; color: inherit;"></td>
+                    </tr>
+                    <tr style="background-color: #fffdf5;">
+                        <td><span class="bold">Sainte-Agathe</span></td>
+                        <td><span class="bold">La Magie du Jeu</span></td>
+                        <td><span class="font-small">ALSH Péri, ALSH Merc., ALSH Vac.</span></td>
+                        <td class="num">62 200,00 €</td>
+                        <td class="num">62 200,00 €</td>
+                        <td class="num" style="color: var(--accent-red); font-weight: 600">-10 000,00 €</td>
+                        <td class="num bold" style="color: var(--primary);">52 200,00 €</td>
+                        <td style="font-size: 0.68rem; font-weight: 500; color: #92400e;">ALSH Péri : Trésorerie importante et questionnements</td>
+                    </tr>
+                    <tr>
+                        <td><span class="bold">Saint-Julien-sur-Loire</span></td>
+                        <td><span class="bold">La clef 43 / Accompagnement logement</span></td>
+                        <td><span class="font-small">Autres</span></td>
+                        <td class="num">-</td>
+                        <td class="num">-</td>
+                        <td class="num" style="color: inherit; font-weight: normal">-</td>
+                        <td class="num bold" style="color: var(--primary);">0,00 €</td>
+                        <td style="font-size: 0.68rem; font-weight: normal; color: inherit;"></td>
+                    </tr>
+                    <tr>
+                        <td><span class="bold">Saint-Julien-sur-Loire</span></td>
+                        <td><span class="bold">Les 6 loupiots en Marches Micro-crèche</span></td>
+                        <td><span class="font-small">Crèche</span></td>
+                        <td class="num">93 000,00 €</td>
+                        <td class="num">78 617,99 €</td>
+                        <td class="num" style="color: inherit; font-weight: normal">-</td>
+                        <td class="num bold" style="color: var(--primary);">78 617,99 €</td>
+                        <td style="font-size: 0.68rem; font-weight: normal; color: inherit;"></td>
+                    </tr>
+                    <tr>
+                        <td><span class="bold">Saint-Paul-en-Forez</span></td>
+                        <td><span class="bold">Les Sympas loups</span></td>
+                        <td><span class="font-small">ALSH Merc., ALSH Vac., Ados</span></td>
+                        <td class="num">78 914,00 €</td>
+                        <td class="num">70 809,12 €</td>
+                        <td class="num" style="color: inherit; font-weight: normal">-</td>
+                        <td class="num bold" style="color: var(--primary);">70 809,12 €</td>
+                        <td style="font-size: 0.68rem; font-weight: normal; color: inherit;"></td>
+                    </tr>
+                    <tr>
+                        <td><span class="bold">Sainte Sigolène</span></td>
+                        <td><span class="bold">Ludothèque Ricochet</span></td>
+                        <td><span class="font-small">Ludothèque</span></td>
+                        <td class="num">37 296,00 €</td>
+                        <td class="num">16 447,00 €</td>
+                        <td class="num" style="color: inherit; font-weight: normal">-</td>
+                        <td class="num bold" style="color: var(--primary);">16 447,00 €</td>
+                        <td style="font-size: 0.68rem; font-weight: normal; color: inherit;"></td>
+                    </tr>
+                    <tr>
+                        <td><span class="bold">Saint-Julien-sur-Loire</span></td>
+                        <td><span class="bold">MJC LE MONTEIL</span></td>
+                        <td><span class="font-small">Ados</span></td>
+                        <td class="num">53 000,00 €</td>
+                        <td class="num">53 000,00 €</td>
+                        <td class="num" style="color: inherit; font-weight: normal">-</td>
+                        <td class="num bold" style="color: var(--primary);">53 000,00 €</td>
+                        <td style="font-size: 0.68rem; font-weight: normal; color: inherit;"></td>
+                    </tr>
+                    <tr>
+                        <td><span class="bold">Saint-Julien-sur-Loire</span></td>
+                        <td><span class="bold">Mission Locale / Permanence prévention jeunesse</span></td>
+                        <td><span class="font-small">Autres</span></td>
+                        <td class="num">31 540,00 €</td>
+                        <td class="num">31 540,00 €</td>
+                        <td class="num" style="color: inherit; font-weight: normal">-</td>
+                        <td class="num bold" style="color: var(--primary);">31 540,00 €</td>
+                        <td style="font-size: 0.68rem; font-weight: normal; color: inherit;"></td>
+                    </tr>
+                    <tr style="background-color: #fffdf5;">
+                        <td><span class="bold">Les Tilleuls</span></td>
+                        <td><span class="bold">Oxygène</span></td>
+                        <td><span class="font-small">ALSH Péri, ALSH Merc., ALSH Vac., Ados</span></td>
+                        <td class="num">158 674,00 €</td>
+                        <td class="num">100 799,26 €</td>
+                        <td class="num" style="color: var(--secondary); font-weight: 600">+10 000,00 €</td>
+                        <td class="num bold" style="color: var(--primary);">110 799,26 €</td>
+                        <td style="font-size: 0.68rem; font-weight: 500; color: #92400e;">ALSH Péri : Aide pour payer le bus périscolaire</td>
+                    </tr>
+                    <tr style="background-color: #fffdf5;">
+                        <td><span class="bold">Sainte-Agathe</span></td>
+                        <td><span class="bold">Planet'air</span></td>
+                        <td><span class="font-small">ALSH Péri, ALSH Merc., ALSH Vac., Ados</span></td>
+                        <td class="num">195 000,00 €</td>
+                        <td class="num">148 852,25 €</td>
+                        <td class="num" style="color: var(--secondary); font-weight: 600">+13 000,00 €</td>
+                        <td class="num bold" style="color: var(--primary);">161 852,25 €</td>
+                        <td style="font-size: 0.68rem; font-weight: 500; color: #92400e;">Ados : Soutien financier de lancement d'activité, au regard du prorata des heures non réalisées en 2025</td>
+                    </tr>
+                    <tr>
+                        <td><span class="bold">Saint-Julien-sur-Loire</span></td>
+                        <td><span class="bold">Planning familial / Prévention familles</span></td>
+                        <td><span class="font-small">Autres</span></td>
+                        <td class="num">6 000,00 €</td>
+                        <td class="num">1 500,00 €</td>
+                        <td class="num" style="color: inherit; font-weight: normal">-</td>
+                        <td class="num bold" style="color: var(--primary);">1 500,00 €</td>
+                        <td style="font-size: 0.68rem; font-weight: normal; color: inherit;"></td>
+                    </tr>
+                    <tr>
+                        <td><span class="bold">Saint-Julien-sur-Loire</span></td>
+                        <td><span class="bold">RPE 6 loupiots</span></td>
+                        <td><span class="font-small">RPE</span></td>
+                        <td class="num">66 100,00 €</td>
+                        <td class="num">66 100,00 €</td>
+                        <td class="num" style="color: inherit; font-weight: normal">-</td>
+                        <td class="num bold" style="color: var(--primary);">66 100,00 €</td>
+                        <td style="font-size: 0.68rem; font-weight: normal; color: inherit;"></td>
+                    </tr>
+                    <tr>
+                        <td><span class="bold">Mireval-sur-Loire</span></td>
+                        <td><span class="bold">RPE La Farandole</span></td>
+                        <td><span class="font-small">RPE</span></td>
+                        <td class="num">23 600,00 €</td>
+                        <td class="num">23 600,00 €</td>
+                        <td class="num" style="color: inherit; font-weight: normal">-</td>
+                        <td class="num bold" style="color: var(--primary);">23 600,00 €</td>
+                        <td style="font-size: 0.68rem; font-weight: normal; color: inherit;"></td>
+                    </tr>
+                    <tr>
+                        <td><span class="bold">Saint-Julien-sur-Loire</span></td>
+                        <td><span class="bold">Relais</span></td>
+                        <td><span class="font-small">Autres</span></td>
+                        <td class="num">1 000,00 €</td>
+                        <td class="num">1 000,00 €</td>
+                        <td class="num" style="color: inherit; font-weight: normal">-</td>
+                        <td class="num bold" style="color: var(--primary);">1 000,00 €</td>
+                        <td style="font-size: 0.68rem; font-weight: normal; color: inherit;"></td>
+                    </tr>
+                    <tr>
+                        <td><span class="bold">Saint-Julien-sur-Loire</span></td>
+                        <td><span class="bold">Sourirs à l'hirondelle / Activité enfants hospitalisés</span></td>
+                        <td><span class="font-small">Autres</span></td>
+                        <td class="num">2 600,00 €</td>
+                        <td class="num">500,00 €</td>
+                        <td class="num" style="color: inherit; font-weight: normal">-</td>
+                        <td class="num bold" style="color: var(--primary);">500,00 €</td>
+                        <td style="font-size: 0.68rem; font-weight: normal; color: inherit;"></td>
+                    </tr>
+                    <tr class="total-row">
+                        <td colspan="3">TOTAL GÉNÉRAL (PÔLE ENFANCE JEUNESSE SOLIDARITÉ)</td>
+                        <td class="num">2 230 718,00 €</td>
+                        <td class="num">1 878 796,88 €</td>
+                        <td class="num">+32 901,00 €</td>
+                        <td class="num">1 911 697,88 €</td>
+                        <td style="font-size: 0.68rem; font-weight: 600;">Enveloppe globale réajustée (Planet'air Ados 13k réintégré)</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <!-- ENVELOPE SUMMARY CALLOUT BOX -->
+            <div style="margin-top: 15px; display: grid; grid-template-columns: 2.2fr 0.8fr; gap: 15px;">
+                <div class="disclaimer-box" style="background-color: var(--secondary-light); border: 1px solid #ccfbf1; border-left: 5px solid var(--secondary); padding: 10px 15px; border-radius: 8px; font-size: 0.72rem; color: #115e59; line-height: 1.4; display: flex; align-items: center;">
+                    <span>
+                        <strong>📊 Suivi de l'Enveloppe Budgétaire Globale :</strong><br>
+                        Le total des subventions finales octroyées respecte pleinement les orientations fixées par l'enveloppe de référence de <strong>1 953 000,00 €</strong>. Les aides exceptionnelles décidées en commission ont été entièrement intégrées et financées.
+                    </span>
+                </div>
+                <div class="envelope-summary-box" style="background-color: var(--primary-light); border: 1px solid #bfdbfe; border-left: 5px solid var(--primary); padding: 8px 15px; border-radius: 8px; font-size: 0.7rem; color: #1e3a8a; display: flex; flex-direction: column; justify-content: center;">
+                    <div style="margin-bottom: 2px;"><strong>Enveloppe Cible :</strong> <span style="float: right; font-weight: 700;">1 953 000,00 €</span></div>
+                    <div style="margin-bottom: 2px;"><strong>Attributions Finales :</strong> <span style="float: right; font-weight: 700;">1 911 697,88 €</span></div>
+                    <div style="margin-top: 3px; padding-top: 3px; border-top: 1px solid #bfdbfe; font-weight: 700; color: var(--secondary); font-size: 0.72rem;">
+                        <strong>Crédit Restant :</strong> <span style="float: right; font-weight: 800; color: var(--secondary);">41 302,12 €</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>

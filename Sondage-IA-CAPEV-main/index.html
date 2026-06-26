@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formation IA CNFPT - Programme & Sondage Interactif</title>
+    
+    <!-- Visual Remote Debugger (Registered immediately before any other script loads) -->
+    <script>
+        window.addEventListener('error', function(e) {
+            const errorDiv = document.createElement('div');
+            errorDiv.style.position = 'fixed';
+            errorDiv.style.top = '0';
+            errorDiv.style.left = '0';
+            errorDiv.style.width = '100%';
+            errorDiv.style.background = '#ef4444';
+            errorDiv.style.color = '#ffffff';
+            errorDiv.style.padding = '1rem';
+            errorDiv.style.zIndex = '999999';
+            errorDiv.style.fontSize = '0.9rem';
+            errorDiv.style.fontFamily = 'monospace';
+            errorDiv.style.whiteSpace = 'pre-wrap';
+            errorDiv.innerHTML = '<strong>[Erreur HTML/JS]</strong> ' + e.message + ' (fichier: ' + (e.filename ? e.filename.split('/').pop() : 'inconnu') + ', ligne: ' + e.lineno + ')';
+            if (document.body) {
+                document.body.appendChild(errorDiv);
+            } else {
+                window.addEventListener('DOMContentLoaded', function() { document.body.appendChild(errorDiv); });
+            }
+        });
+
+        window.addEventListener('unhandledrejection', function(e) {
+            const errorDiv = document.createElement('div');
+            errorDiv.style.position = 'fixed';
+            errorDiv.style.top = '0';
+            errorDiv.style.left = '0';
+            errorDiv.style.width = '100%';
+            errorDiv.style.background = '#f59e0b';
+            errorDiv.style.color = '#ffffff';
+            errorDiv.style.padding = '1rem';
+            errorDiv.style.zIndex = '999999';
+            errorDiv.style.fontSize = '0.9rem';
+            errorDiv.style.fontFamily = 'monospace';
+            errorDiv.style.whiteSpace = 'pre-wrap';
+            errorDiv.innerHTML = '<strong>[Erreur Promesse]</strong> ' + (e.reason ? (e.reason.message || e.reason) : 'Promesse rejetée');
+            if (document.body) {
+                document.body.appendChild(errorDiv);
+            } else {
+                window.addEventListener('DOMContentLoaded', function() { document.body.appendChild(errorDiv); });
+            }
+        });
+    </script>
+    
+    <!-- Meta SEO -->
+    <meta name="description" content="Découvrez le programme de la formation IA du CNFPT du 28 septembre 2026 et participez au sondage interactif pour adapter la journée à vos besoins.">
+    <meta name="author" content="CNFPT IA Formateur">
+    
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="style.css?v=1.0.7">
+    
+    <!-- Supabase JS Client Mock (Local & Offline) -->
+    <script src="supabase-mock.js"></script>
+    
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+</head>
+<body>
+
+    <div class="app-container">
+        
+        <!-- =========================================================================
+           HEADER : LOGOS & NAVIGATION
+           ========================================================================= -->
+        <header class="app-header">
+            <div class="logos-container">
+                <img src="Logo_CNFPT.png" alt="Logo CNFPT" class="logo-item" id="cnfpt-logo">
+                <div class="logo-sep"></div>
+                <img src="logo.png" alt="Logo Formation" class="logo-item" id="formation-logo">
+            </div>
+            <nav class="nav-menu">
+                <a href="#programme" class="btn-nav active">Programme</a>
+                <a href="#sondage" class="btn-nav">Sondage</a>
+            </nav>
+        </header>
+
+        <!-- =========================================================================
+           VUE 1 : PRÉSENTATION DU PROGRAMME
+           ========================================================================= -->
+        <main id="view-programme" class="app-view active-view">
+            <div class="programme-split">
+                <!-- Côté gauche : Titres et Engagement Pédagogique -->
+                <div class="programme-left">
+                    <div class="hero-badge">Session du 28 Septembre 2026</div>
+                    <h1 class="hero-title-compact">L'IA dans votre Collectivité</h1>
+                    <p class="hero-desc-compact">
+                        Une journée d'immersion complète et sur-mesure au service des agents de la fonction publique territoriale.
+                    </p>
+                    
+                    <div class="badge-pedagogy">
+                        <span class="badge-pedagogy-icon">⚡</span>
+                        <div class="badge-pedagogy-text">
+                            <strong>Pédagogie active & rythmée</strong>
+                            <p>Des exercices individuels et collectifs intégrés tout au long de la journée, adaptés à vos profils métiers.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="badge-pedagogy" style="margin-top: -1rem;">
+                        <span class="badge-pedagogy-icon">🎯</span>
+                        <div class="badge-pedagogy-text">
+                            <strong>Objectif final</strong>
+                            <p>À la fin de la formation, tous les agents auront travaillé activement sur l'utilisation de l'IA et sauront s'en servir en toute sécurité, dans le respect de la réglementation, et de façon optimisée et réutilisable dans leurs pratiques actuelles.</p>
+                        </div>
+                    </div>
+                    
+                    <a href="#sondage" class="btn-cta-compact">Démarrer le sondage pour adapter la formation à vos pratiques <span>→</span></a>
+                </div>
+
+                <!-- Côté droit : Les 5 Modules très visuels -->
+                <div class="programme-right">
+                    <h2 class="section-title-compact">Les Modules de la Journée</h2>
+                    <div class="compact-modules">
+                        <!-- Module 1 -->
+                        <div class="module-card-compact" title="Comprendre le fonctionnement technique et ses limites.">
+                            <span class="module-num-compact">01</span>
+                            <div class="module-info-compact">
+                                <h3>Fonctionnement de l'IA <span class="badge-exercise">(+ exercices)</span></h3>
+                                <p>Fonctionnement des LLM, réseaux de neurones et limites techniques.</p>
+                            </div>
+                        </div>
+
+                        <!-- Module 2 -->
+                        <div class="module-card-compact" title="Savoir dialoguer efficacement avec les modèles.">
+                            <span class="module-num-compact">02</span>
+                            <div class="module-info-compact">
+                                <h3>L'Art du Prompting <span class="badge-exercise">(+ exercices)</span></h3>
+                                <p>Rôles, contextes, contraintes et méthodes avancées de dialogue.</p>
+                            </div>
+                        </div>
+
+                        <!-- Module 3 -->
+                        <div class="module-card-compact" title="Assurer le respect du RGPD et la confidentialité.">
+                            <span class="module-num-compact">03</span>
+                            <div class="module-info-compact">
+                                <h3>Sécurité & Réglementation <span class="badge-exercise">(+ exercices)</span></h3>
+                                <p>RGPD, confidentialité des données publiques et sécurité informatique.</p>
+                            </div>
+                        </div>
+
+                        <!-- Module 4 -->
+                        <div class="module-card-compact" title="Garder un esprit critique face aux résultats.">
+                            <span class="module-num-compact">04</span>
+                            <div class="module-info-compact">
+                                <h3>Fiabilité & Hallucinations <span class="badge-exercise">(+ exercices)</span></h3>
+                                <p>Fiabilité des modèles, vérification des faits et contrôle humain.</p>
+                            </div>
+                        </div>
+
+                        <!-- Module 5 -->
+                        <div class="module-card-compact" title="Découvrir les solutions adaptées à vos tâches.">
+                            <span class="module-num-compact">05</span>
+                            <div class="module-info-compact">
+                                <h3>Panorama des Outils IA <span class="badge-exercise">(+ exercices)</span></h3>
+                                <p>ChatGPT, Claude, Gemini, outils de bureautique et génération d'images.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- =========================================================================
+           VUE 2 : SONDAGE INTERACTIF (WIZARD)
+           ========================================================================= -->
+        <section id="view-sondage" class="app-view">
+            
+            <!-- CONTENEUR DU FORMULAIRE ACTIF -->
+            <div id="survey-form-container" class="survey-wizard">
+                
+                <!-- Barre de progression -->
+                <div class="progress-bar-container">
+                    <div class="progress-bar-fill" id="progress-bar"></div>
+                    <span class="step-indicator" id="step-indicator-text">Étape 1 sur 4</span>
+                </div>
+
+                <!-- ÉTAPE 1 : PROFIL -->
+                <div id="step-1" class="survey-step active-step">
+                    <h2 class="step-title">Quel est votre profil au sein de la collectivité ?</h2>
+                    <p class="step-desc">Sélectionnez la catégorie qui correspond le mieux à votre fonction au quotidien.</p>
+                    
+                    <div class="profile-grid">
+                        <div class="profile-card" data-profile="Admin / Secrétariat">
+                            <span class="profile-icon">📂</span>
+                            <span class="profile-name">Admin / Secrétariat</span>
+                        </div>
+                        <div class="profile-card" data-profile="Cadre / Manager">
+                            <span class="profile-icon">👥</span>
+                            <span class="profile-name">Cadre / Manager</span>
+                        </div>
+                        <div class="profile-card" data-profile="Technique / Informatique">
+                            <span class="profile-icon">💻</span>
+                            <span class="profile-name">Technique / Informatique</span>
+                        </div>
+                        <div class="profile-card" data-profile="Culture / Éducation">
+                            <span class="profile-icon">🎨</span>
+                            <span class="profile-name">Culture / Éducation</span>
+                        </div>
+                        <div class="profile-card" data-profile="Autre Profil">
+                            <span class="profile-icon">🌍</span>
+                            <span class="profile-name">Autre Profil</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ÉTAPE 2 : USAGES RECHERCHÉS -->
+                <div id="step-2" class="survey-step">
+                    <h2 class="step-title">Dans quels contextes viseriez-vous l'utilisation de l'IA ? (Usages recherchés)</h2>
+                    <p class="step-desc">Ajoutez vos propres cas d'usage (8 mots max) ou cliquez pour voter (<strong>fond bleu avec coche ✓</strong>). Les bordures colorées indiquent le nombre de votes des autres (gris = aucun vote).</p>
+                    
+                    <!-- Nuage interactif -->
+                    <div class="word-cloud-wrapper" id="cloud-usages">
+                        <div class="word-cloud-empty">Chargement du nuage de mots...</div>
+                    </div>
+
+                    <!-- Champ d'ajout -->
+                    <div class="word-input-container">
+                        <input type="text" id="input-usage" class="input-modern" placeholder="Ex: Rédaction de rapports, Comptes-rendus..." maxlength="80">
+                        <button type="button" id="btn-add-usage" class="btn-add-word">Ajouter</button>
+                    </div>
+                </div>
+
+                <!-- ÉTAPE 3 : NUAGE DE MOTS (ATTENTES) -->
+                <div id="step-3" class="survey-step">
+                    <h2 class="step-title">Qu'attendez-vous de cette formation ?</h2>
+                    <p class="step-desc">Ajoutez vos propres mots-clés (8 mots max) ou cliquez pour voter (<strong>fond bleu avec coche ✓</strong>). Les bordures colorées indiquent le nombre de votes des autres (gris = aucun vote).</p>
+                    
+                    <!-- Nuage interactif -->
+                    <div class="word-cloud-wrapper" id="cloud-attentes">
+                        <div class="word-cloud-empty">Chargement du nuage de mots...</div>
+                    </div>
+
+                    <!-- Champ d'ajout -->
+                    <div class="word-input-container">
+                        <input type="text" id="input-attente" class="input-modern" placeholder="Ex: Pratique, Gagner du temps, Sécurité..." maxlength="80">
+                        <button type="button" id="btn-add-attente" class="btn-add-word">Ajouter</button>
+                    </div>
+                </div>
+
+                <!-- ÉTAPE 4 : NUAGE DE MOTS (OUTILS) -->
+                <div id="step-4" class="survey-step">
+                    <h2 class="step-title">Quels outils d'IA utilisez-vous déjà ?</h2>
+                    <p class="step-desc">Indiquez les outils testés (8 mots max) ou cliquez pour voter (<strong>fond bleu avec coche ✓</strong>). Les bordures colorées indiquent le nombre de votes des autres (gris = aucun vote).</p>
+                    
+                    <!-- Nuage interactif -->
+                    <div class="word-cloud-wrapper" id="cloud-outils">
+                        <div class="word-cloud-empty">Chargement du nuage de mots...</div>
+                    </div>
+
+                    <!-- Champ d'ajout -->
+                    <div class="word-input-container">
+                        <input type="text" id="input-outil" class="input-modern" placeholder="Ex: ChatGPT, Copilot, Midjourney..." maxlength="80">
+                        <button type="button" id="btn-add-outil" class="btn-add-word">Ajouter</button>
+                    </div>
+                </div>
+
+
+
+                <!-- Pied de page du formulaire (Contrôles) -->
+                <div class="wizard-footer">
+                    <button type="button" id="btn-prev" class="btn-wizard" disabled>
+                        <span>←</span> Précédent
+                    </button>
+                    <button type="button" id="btn-next" class="btn-wizard btn-wizard-primary" disabled>
+                        Suivant <span>→</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- CONTENEUR DE SUCCÈS (Sondage déjà envoyé) -->
+            <div id="survey-success-container" class="survey-wizard survey-success" style="display: none;">
+                <span class="success-icon">🎉</span>
+                <h2 class="step-title">Merci pour vos réponses !</h2>
+                <p class="step-desc" style="margin-bottom: 2rem;">Votre participation a bien été enregistrée anonymement. Vos retours vont aider le formateur à affiner le programme de la journée.</p>
+                
+                <hr style="border: none; border-top: 1px solid var(--border-glass-light); margin: 2rem 0;">
+                
+                <!-- Vue consolidée des nuages en direct pour les participants -->
+                <h3 style="font-family:var(--font-heading); margin-bottom: 1rem; color: var(--color-accent);">Nuage en direct : Usages recherchés</h3>
+                <div class="word-cloud-wrapper" id="result-cloud-usages" style="min-height: 150px; margin-bottom: 2rem;"></div>
+
+                <h3 style="font-family:var(--font-heading); margin-bottom: 1rem; color: var(--color-accent);">Nuage en direct : Vos attentes</h3>
+                <div class="word-cloud-wrapper" id="result-cloud-attentes" style="min-height: 150px; margin-bottom: 2rem;"></div>
+                
+                <h3 style="font-family:var(--font-heading); margin-bottom: 1rem; color: var(--color-accent);">Nuage en direct : Les outils déjà utilisés</h3>
+                <div class="word-cloud-wrapper" id="result-cloud-outils" style="min-height: 150px; margin-bottom: 2rem;"></div>
+
+                <!-- Bouton recommencer le sondage -->
+                <div style="margin-top: 3rem; text-align: center;">
+                    <button type="button" id="btn-restart-survey" class="btn-wizard" style="margin: 0 auto; display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(15, 23, 42, 0.05); border: 1px solid var(--border-glass-light); color: var(--text-light);">
+                        🔄 Recommencer le sondage
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- =========================================================================
+           VUE 3 : TABLEAU DE BORD D'ADMINISTRATION
+           ========================================================================= -->
+        <section id="view-admin" class="app-view">
+            <div class="admin-header">
+                <div class="admin-title">
+                    <span>Espace Formateur</span> 
+                    <span class="admin-badge">ADMIN</span>
+                </div>
+                <div class="admin-actions">
+                    <button type="button" id="btn-export-csv" class="btn-admin btn-admin-success">
+                        📥 Exporter CSV (Excel)
+                    </button>
+                    <button type="button" id="btn-reset-db" class="btn-admin btn-admin-danger">
+                        ⚠️ Réinitialiser la DB
+                    </button>
+                    <button type="button" id="btn-logout" class="btn-admin" style="background: rgba(255,255,255,0.05); color: var(--text-light); border: 1px solid var(--border-glass-light);">
+                        Déconnexion
+                    </button>
+                </div>
+            </div>
+
+            <!-- Grille des statistiques condensées -->
+            <div class="admin-stats-grid">
+                <!-- Stat 1 : Participants -->
+                <div class="stat-card" style="display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+                    <h3 class="stat-card-title">Réponses Reçues</h3>
+                    <div class="stat-value-big" id="stat-total-respondents">0</div>
+                    <p style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted-light);">Participants au sondage anonyme</p>
+                </div>
+
+                <!-- Stat 2 : Répartition Profils -->
+                <div class="stat-card">
+                    <h3 class="stat-card-title">Profils des participants</h3>
+                    <div class="chart-container">
+                        <canvas id="chart-profiles"></canvas>
+                    </div>
+                </div>
+
+                <!-- Stat 3 : Contextes d'usage prioritaires -->
+                <div class="stat-card">
+                    <h3 class="stat-card-title">Usages recherchés</h3>
+                    <div class="chart-container">
+                        <canvas id="chart-contexts"></canvas>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Section modération des nuages de mots -->
+            <h2 style="font-family: var(--font-heading); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                💬 Modération des Nuages de Mots
+            </h2>
+            <div class="admin-clouds-grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
+                <div class="admin-cloud-card">
+                    <h3 style="font-family:var(--font-heading); margin-bottom: 1rem; color:var(--color-primary);">Usages recherchés</h3>
+                    <div class="admin-cloud-words" id="admin-cloud-usages"></div>
+                </div>
+                <div class="admin-cloud-card">
+                    <h3 style="font-family:var(--font-heading); margin-bottom: 1rem; color:var(--color-primary-light);">Attentes</h3>
+                    <div class="admin-cloud-words" id="admin-cloud-attentes"></div>
+                </div>
+                <div class="admin-cloud-card">
+                    <h3 style="font-family:var(--font-heading); margin-bottom: 1rem; color:var(--color-accent);">Outils IA</h3>
+                    <div class="admin-cloud-words" id="admin-cloud-outils"></div>
+                </div>
+            </div>
+
+            <!-- Table de données brutes -->
+            <h2 style="font-family: var(--font-heading); margin-bottom: 1.5rem;">📊 Réponses détaillées</h2>
+            <div class="admin-table-container">
+                <div class="table-responsive">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Profil</th>
+                                <th>Contextes visés</th>
+                                <th style="text-align: center; width: 80px;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-table-body">
+                            <!-- Rempli dynamiquement -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- =========================================================================
+           PIED DE PAGE : COPYRIGHT & CADENAS SECRET
+           ========================================================================= -->
+        <footer class="app-footer">
+            <div>
+            </div>
+            <div>
+                <!-- Cadenas secret pour se connecter à l'administration -->
+                <button type="button" class="btn-padlock" id="btn-open-login" title="Espace Formateur">
+                    🔒
+                </button>
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- =========================================================================
+       MODALE DE CONNEXION ADMIN
+       ========================================================================= -->
+    <div class="modal-overlay" id="modal-login">
+        <div class="modal-card">
+            <h3 class="modal-title">Authentification</h3>
+            <p class="modal-desc">Veuillez saisir le mot de passe de l'administrateur (admin@admin.fr) pour accéder au tableau de bord.</p>
+            
+            <div class="form-group">
+                <label for="input-admin-password">Mot de passe Supabase</label>
+                <input type="password" id="input-admin-password" class="input-modern" style="width: 100%; border-radius: 8px;" placeholder="••••••••">
+            </div>
+
+            <div class="modal-buttons">
+                <button type="button" id="btn-cancel-login" class="btn-modal btn-modal-cancel">Annuler</button>
+                <button type="button" id="btn-submit-login" class="btn-modal btn-modal-submit">Valider</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conteneur des notifications (Toast) -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Script principal de l'application -->
+    <script src="app.js?v=1.0.7" defer></script>
+    
+    <!-- Détection de chargement de l'application (Robustesse & Anti-Cache) -->
+    <script>
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                if (!window.appInitialized) {
+                    const warningDiv = document.createElement('div');
+                    warningDiv.style.position = 'fixed';
+                    warningDiv.style.top = '0';
+                    warningDiv.style.left = '0';
+                    warningDiv.style.width = '100%';
+                    warningDiv.style.background = '#dc2626';
+                    warningDiv.style.color = '#ffffff';
+                    warningDiv.style.padding = '1.2rem';
+                    warningDiv.style.zIndex = '999999';
+                    warningDiv.style.fontSize = '0.95rem';
+                    warningDiv.style.fontWeight = 'bold';
+                    warningDiv.style.textAlign = 'center';
+                    warningDiv.style.boxShadow = '0 4px 15px rgba(0,0,0,0.3)';
+                    warningDiv.style.fontFamily = 'system-ui, -apple-system, sans-serif';
+                    warningDiv.innerHTML = '⚠️ Le script de l\'application (app.js) n\'a pas pu démarrer. <br>' +
+                        '<span style="font-weight:normal;font-size:0.85rem;display:inline-block;margin-top:0.4rem;text-align:left;">' +
+                        '• Votre navigateur utilise probablement une version obsolète en cache. <strong>Appuyez sur Ctrl + F5</strong> (ou Cmd + Shift + R sur Mac) pour forcer le rechargement.<br>' +
+                        '• Si le problème persiste, il se peut que le réseau de votre collectivité bloque les connexions nécessaires.' +
+                        '</span>';
+                    document.body.appendChild(warningDiv);
+                }
+            }, 500);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1392 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Réservation Matériel CCMVR</title>
+    <!-- Icônes FontAwesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        /* --- STYLES GÉNÉRAUX --- */
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg-color: #f8fafc;
+            --text-color: #334155;
+            --border-color: #e2e8f0;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        /* --- ÉCRAN DE VERROUILLAGE (Accès Général) --- */
+        #access-lock-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 10000;
+            background: #1e293b;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .lock-box {
+            text-align: center;
+            background: #334155;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+        }
+
+        .lock-input {
+            padding: 12px;
+            font-size: 1.2rem;
+            border-radius: 6px;
+            border: none;
+            text-align: center;
+            margin-top: 20px;
+            width: 200px;
+            color: #333;
+        }
+
+        .lock-btn {
+            display: block;
+            margin: 20px auto 0;
+            padding: 10px 30px;
+            font-size: 1rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .lock-btn:hover {
+            background: var(--primary-hover);
+        }
+
+        /* --- APPLICATION PRINCIPALE --- */
+        #app-container {
+            display: none;
+            height: 100vh;
+            flex-direction: column;
+        }
+
+        /* Header */
+        header {
+            background: white;
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-box {
+            height: 50px;
+            width: 80px;
+            border: 2px solid #dbeafe;
+            color: #1e40af;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            border-radius: 4px;
+            background: white;
+        }
+
+        .app-title {
+            border-left: 3px solid #cbd5e1;
+            padding-left: 15px;
+        }
+
+        .app-title-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .app-title h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin: 0;
+            color: #1e293b;
+        }
+
+        .app-title p {
+            font-size: 0.85rem;
+            color: #64748b;
+            margin: 0;
+        }
+
+        /* Boutons */
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: opacity 0.2s;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-success {
+            background-color: #16a34a;
+            color: white;
+        }
+
+        .btn-danger {
+            background-color: #ef4444;
+            color: white;
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: #64748b;
+            font-size: 1.1rem;
+            padding: 8px;
+            border: 1px solid transparent;
+        }
+
+        .btn-ghost:hover {
+            background-color: #f1f5f9;
+        }
+
+        /* Loader de données */
+        #data-loader {
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.95);
+            z-index: 5000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--border-color);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Calendrier principal */
+        .calendar-controls {
+            padding: 15px 20px;
+            background: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .calendar-wrapper {
+            padding: 20px;
+            overflow-x: auto;
+            background: white;
+            flex: 1;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: 220px repeat(var(--days-in-month, 30), minmax(40px, 1fr));
+            border: 1px solid var(--border-color);
+            min-width: 900px;
+        }
+
+        .cal-cell {
+            padding: 8px;
+            text-align: center;
+            font-size: 0.85rem;
+            border-right: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+            background: #f8fafc;
+            min-height: 50px;
+            height: auto;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cal-header {
+            font-weight: 600;
+            background: #f1f5f9;
+            height: auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .cal-weekend {
+            background-color: #fff7ed;
+            color: #9a3412;
+        }
+
+        .equip-row-header {
+            position: sticky;
+            left: 0;
+            z-index: 10;
+            background: white;
+            text-align: left;
+            padding: 10px 15px;
+            font-weight: 600;
+            color: #334155;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-right: 2px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+            min-height: 50px;
+            height: auto;
+            cursor: pointer;
+            transition: 0.2s;
+            gap: 10px;
+        }
+
+        .equip-row-header:hover {
+            background-color: #f0f9ff;
+            color: var(--primary);
+        }
+
+        /* Barres de réservation */
+        .resa-bar {
+            position: absolute;
+            top: 15%;
+            left: 0;
+            height: 70%;
+            background-color: var(--primary);
+            color: white;
+            font-size: 0.75rem;
+            padding: 0 8px;
+            display: flex;
+            align-items: center;
+            border-radius: 4px;
+            overflow: hidden;
+            white-space: nowrap;
+            z-index: 5;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin: 0;
+        }
+
+        .resa-bar.admin-mode {
+            background-color: #ef4444;
+        }
+
+        /* Admin Panel */
+        #admin-panel {
+            background: #f1f5f9;
+            padding: 20px;
+            border-top: 1px solid var(--border-color);
+            display: none;
+        }
+
+        #admin-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .admin-item {
+            background: white;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .admin-item button:disabled {
+            opacity: 0.3;
+            cursor: default;
+        }
+
+        /* Admin Sections Deployables (Accordéon) */
+        .admin-section-header {
+            cursor: pointer;
+            padding: 12px 15px;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.2s;
+            margin-bottom: 10px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .admin-section-header:hover {
+            background: #e2e8f0;
+        }
+
+        .admin-section-content {
+            display: none;
+            padding: 10px 5px 20px 5px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .admin-toggle-icon {
+            transition: transform 0.3s;
+            color: #64748b;
+            font-size: 1.1rem;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Modales */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 6000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-box {
+            background: white;
+            width: 100%;
+            max-width: 500px;
+            border-radius: 8px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* Formulaires */
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+        }
+
+        /* Mini Calendrier */
+        .mini-cal-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            margin-top: 10px;
+        }
+
+        .mini-day {
+            padding: 6px;
+            text-align: center;
+            font-size: 0.85rem;
+            border-radius: 4px;
+            transition: 0.2s;
+            user-select: none;
+        }
+
+        .day-busy {
+            background: #fee2e2;
+            color: #991b1b;
+            text-decoration: line-through;
+            opacity: 0.6;
+        }
+
+        .day-free {
+            background: #dcfce7;
+            color: #166534;
+            cursor: pointer;
+        }
+
+        .day-free:hover {
+            background: #bbf7d0;
+        }
+
+        .day-sel {
+            background: var(--primary);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(37, 99, 235, 0.4);
+        }
+
+        .day-sel:hover {
+            background: var(--primary-hover);
+        }
+
+        /* Trigger Admin Caché */
+        #secret-trigger {
+            position: fixed;
+            bottom: 0;
+            right: 0;
+            width: 30px;
+            height: 30px;
+            z-index: 9000;
+            cursor: default;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- 1. ÉCRAN DE VERROUILLAGE GÉNÉRAL -->
+    <div id="access-lock-screen">
+        <div class="lock-box">
+            <h2 style="margin-top:0;">Espace Réservation CCMVR</h2>
+            <p style="color:#cbd5e1;">Veuillez entrer le code d'accès annuel</p>
+            <input type="password" id="global-access-code" class="lock-input" placeholder="Code d'accès" onkeyup="if(event.key==='Enter')app.checkAccess()">
+            <button onclick="app.checkAccess()" class="lock-btn">Entrer</button>
+            <p id="access-error" style="color:#ef4444; margin-top:15px; display:none;">Code incorrect</p>
+        </div>
+    </div>
+
+    <!-- 2. APPLICATION -->
+    <div id="app-container">
+
+        <!-- Loader Données -->
+        <div id="data-loader">
+            <div class="spinner"></div>
+            <div style="margin-top:15px; font-weight:600;">Connexion à la base de données...</div>
+            <div id="connection-error" style="display:none; color:red; margin-top:10px; text-align:center;">
+                Impossible de joindre le serveur.<br>Le réseau bloque peut-être la connexion.
+            </div>
+        </div>
+
+        <header>
+            <div class="logo-area">
+                <div class="logo-box">CCMVR</div>
+                <div class="app-title">
+                    <div class="app-title-header">
+                        <h1>Réservation Matériel</h1>
+                    </div>
+                    <p>Service Vie Associative</p>
+                </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px; flex-wrap: wrap; justify-content: flex-end;">
+                <div id="admin-badge"
+                    style="display:none; background:#fee2e2; color:#991b1b; padding:4px 10px; border-radius:20px; font-size:0.75rem; font-weight:bold; border:1px solid #fecaca;">
+                    MODE ADMIN</div>
+
+                <button onclick="app.openModal('modal-reglement')" class="btn btn-ghost"
+                    style="padding: 8px 16px; font-size: 0.95rem; border: 1px solid #cbd5e1; background: #f8fafc; color: #1e293b;"
+                    title="Voir le règlement">
+                    <i class="fas fa-file-contract"></i> Règlement
+                </button>
+
+                <button onclick="app.openModal('modal-res')" class="btn btn-primary"><i class="fas fa-plus"></i>
+                    Nouvelle Réservation</button>
+                <button id="btn-login" onclick="app.openModal('modal-login')" class="btn btn-ghost"
+                    style="padding: 8px; color:#64748b;" title="Espace Administrateur"><i
+                        class="fas fa-lock"></i></button>
+                <button id="btn-logout" onclick="app.logout()" class="btn btn-ghost"
+                    style="display:none; padding: 8px; color:#ef4444;" title="Déconnexion"><i
+                        class="fas fa-sign-out-alt"></i></button>
+            </div>
+        </header>
+
+        <div class="calendar-controls">
+            <button onclick="app.navMonth(-1)" class="btn btn-ghost"><i class="fas fa-chevron-left"></i></button>
+            <span id="current-month" style="font-size: 1.2rem; font-weight: 700; text-transform: capitalize;">...</span>
+            <button onclick="app.navMonth(1)" class="btn btn-ghost"><i class="fas fa-chevron-right"></i></button>
+        </div>
+
+        <div class="calendar-wrapper">
+            <div id="calendar" class="calendar-grid"></div>
+        </div>
+
+        <!-- Panneau Admin -->
+        <div id="admin-panel">
+            <h2 style="margin-top:0; color:#1e293b; margin-bottom: 15px; font-size: 1.1rem;"><i
+                    class="fas fa-shield-alt" style="color:#ef4444;"></i> Panneau d'Administration</h2>
+
+            <!-- SECTION MATERIEL (Déployable) -->
+            <div class="admin-section-header" onclick="app.toggleAdminSection('admin-content-mat', 'icon-mat')">
+                <div style="display:flex; align-items:center; gap:15px;">
+                    <h3 style="margin:0; color:#334155; font-size: 1rem;"><i class="fas fa-cogs"></i> Gestion Matériel
+                    </h3>
+                    <!-- preventDefault / stopPropagation pour éviter d'ouvrir/fermer en cliquant sur "Trier" -->
+                    <button onclick="event.stopPropagation(); app.sort()" class="btn"
+                        style="background:white; border:1px solid #cbd5e1; padding: 4px 10px; font-size: 0.8rem;">Trier
+                        A-Z</button>
+                </div>
+                <i id="icon-mat" class="fas fa-chevron-down admin-toggle-icon"></i>
+            </div>
+
+            <div id="admin-content-mat" class="admin-section-content">
+                <div style="display:flex; gap:10px; margin-bottom:15px;">
+                    <input type="text" id="new-name" class="form-control" placeholder="Nom de l'équipement"
+                        style="flex:1;">
+                    <input type="text" id="new-desc" class="form-control" placeholder="Description courte"
+                        style="flex:1;">
+                    <button onclick="app.addEquip()" class="btn btn-success">Ajouter</button>
+                </div>
+                <div id="admin-list"></div>
+            </div>
+
+            <!-- SECTION ADMIN RÈGLEMENT (Déployable) -->
+            <div class="admin-section-header" onclick="app.toggleAdminSection('admin-content-reg', 'icon-reg')">
+                <h3 style="margin:0; color:#334155; font-size: 1rem;"><i class="fas fa-file-contract"></i> Gestion du
+                    Règlement</h3>
+                <i id="icon-reg" class="fas fa-chevron-down admin-toggle-icon"></i>
+            </div>
+
+            <div id="admin-content-reg" class="admin-section-content">
+                <div style="display:flex; flex-direction: column; gap:10px; max-width: 800px;">
+                    <textarea id="admin-reglement-text" class="form-control" rows="8" style="resize: vertical;"
+                        placeholder="Saisissez le texte du règlement ici..."></textarea>
+                    <button onclick="app.saveReglement()" id="btn-save-reglement" class="btn btn-primary"
+                        style="align-self: flex-start;">Enregistrer les modifications</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODALES -->
+
+    <!-- Règlement -->
+    <div id="modal-reglement" class="modal-overlay">
+        <div class="modal-box" style="max-width: 600px;">
+            <button onclick="app.closeModals()"
+                style="position:absolute; top:15px; right:15px; border:none; background:none; font-size:1.5rem; cursor:pointer; color:#94a3b8;">&times;</button>
+            <h3 style="margin-top:0; color:#1e293b; display:flex; align-items:center; gap:10px;">
+                <i class="fas fa-book-open" style="color:var(--primary);"></i> Règlement
+            </h3>
+            <!-- Le contenu du règlement est injecté ici, white-space préserve les retours à la ligne -->
+            <div id="reglement-content"
+                style="line-height: 1.6; color: #334155; font-size: 0.95rem; text-align: justify; margin-top:20px; white-space: pre-wrap;">
+                Chargement du règlement...
+            </div>
+            <button onclick="app.closeModals()" class="btn btn-primary" style="width:100%; margin-top:25px;">J'ai
+                compris</button>
+        </div>
+    </div>
+
+    <!-- Réservation -->
+    <div id="modal-res" class="modal-overlay">
+        <div class="modal-box">
+            <button onclick="app.closeModals()"
+                style="position:absolute; top:15px; right:15px; border:none; background:none; font-size:1.5rem; cursor:pointer; color:#94a3b8;">&times;</button>
+            <h3 style="margin-top:0; color:#1e293b;">Réserver</h3>
+            <form onsubmit="return false;">
+                <div class="form-group">
+                    <label>Structure / Nom de l'association</label>
+                    <input type="text" id="res-asso" class="form-control" required placeholder="Ex: Club Sportif">
+                </div>
+
+                <div class="form-group">
+                    <label>Matériel</label>
+                    <select id="res-equip" class="form-control" onchange="app.resetMiniSelection()"></select>
+                </div>
+
+                <!-- Mini Calendrier -->
+                <div
+                    style="background:#f8fafc; padding:15px; border-radius:6px; margin-bottom:15px; border:1px solid #e2e8f0;">
+                    <div style="font-size:0.8rem; color:#64748b; margin-bottom:10px; text-align:center;">
+                        <i class="fas fa-hand-pointer"></i> Cliquez directement sur le planning : <br><b>1er clic</b> =
+                        Début / <b>2ème clic</b> = Fin / <b>3ème clic</b> = Réinitialiser
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:5px; align-items: center;">
+                        <span id="mini-month" style="font-weight:bold; text-transform:capitalize;"></span>
+                        <div>
+                            <button onclick="app.navMini(-1)"
+                                style="border:none; background:none; cursor:pointer; padding:5px;"><i
+                                    class="fas fa-chevron-left"></i></button>
+                            <button onclick="app.navMini(1)"
+                                style="border:none; background:none; cursor:pointer; padding:5px;"><i
+                                    class="fas fa-chevron-right"></i></button>
+                        </div>
+                    </div>
+                    <div id="mini-cal" class="mini-cal-grid"></div>
+                </div>
+
+                <div style="display:flex; gap:10px;">
+                    <div class="form-group" style="flex:1;"><label>Début</label><input type="date" id="res-start"
+                            class="form-control" required onchange="app.syncManualDates()"></div>
+                    <div class="form-group" style="flex:1;"><label>Fin</label><input type="date" id="res-end"
+                            class="form-control" required onchange="app.syncManualDates()"></div>
+                </div>
+                <button onclick="app.saveResa()" class="btn btn-primary"
+                    style="width:100%; padding: 12px; font-size: 1rem;">Confirmer la réservation</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Détails Matériel & Notes -->
+    <div id="modal-det" class="modal-overlay">
+        <div class="modal-box">
+            <button onclick="app.closeModals()"
+                style="position:absolute; top:15px; right:15px; border:none; background:none; font-size:1.5rem; cursor:pointer; color:#94a3b8;">&times;</button>
+            <h3 id="det-title" style="margin-top:0; color:#1e293b;"></h3>
+            <div style="background:#eff6ff; padding:15px; border-radius:6px; margin-bottom:20px;">
+                <div style="font-weight:bold; color:#1e40af; font-size:0.8rem; margin-bottom:5px;">DESCRIPTION</div>
+                <div id="det-desc" style="font-style:italic;"></div>
+            </div>
+            <div style="border-top:1px solid #e2e8f0; padding-top:15px;">
+                <h4 style="margin:0 0 10px 0;">Notes & État du matériel</h4>
+                <div id="notes-list" style="max-height:180px; overflow-y:auto; margin-bottom:15px; padding-right:5px;">
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <input type="text" id="note-auth" placeholder="Votre Nom" class="form-control" style="width:30%;">
+                    <input type="text" id="note-text" placeholder="Remarque, détérioration..." class="form-control"
+                        style="flex:1;">
+                    <button onclick="app.addNote()" class="btn btn-primary">Ok</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Admin -->
+    <div id="modal-login" class="modal-overlay">
+        <div class="modal-box" style="max-width:300px; text-align:center;">
+            <button onclick="app.closeModals()"
+                style="position:absolute; top:10px; right:10px; border:none; background:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+            <h3 style="color:#1e293b;">Connexion Admin</h3>
+            <input type="text" id="login-user" class="form-control" placeholder="Utilisateur"
+                style="text-align:center; margin-bottom:10px;">
+            <input type="password" id="login-pass" class="form-control" placeholder="Mot de passe"
+                style="text-align:center; margin-bottom:15px;" onkeyup="if(event.key==='Enter')app.login()">
+            <button onclick="app.login()" class="btn btn-primary" style="width:100%;">Entrer</button>
+        </div>
+    </div>
+
+    <!-- Trigger Admin Caché supprimé en faveur du cadenas -->
+
+    <script>
+        (function () {
+            // --- 1. CONFIGURATION ---
+            const GLOBAL_CODE = "MAJA00"; // Mot de passe d'entrée général
+            const CFG = {
+                url: 'https://bnloivgpihtsxydjkgyc.supabase.co',
+                key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJubG9pdmdwaWh0c3h5ZGprZ3ljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE0MDY4MjIsImV4cCI6MjA4Njk4MjgyMn0.U1p2xnYLprSO8-w-6mlG9BMO4_-A916XGmsKQ5WkdEg'
+            };
+
+            // Utilitaires de dates robustes pour éviter les bugs de fuseaux horaires
+            const utils = {
+                // Formate une date locale en "YYYY-MM-DD"
+                formatDate: (d) => {
+                    const y = d.getFullYear();
+                    const m = String(d.getMonth() + 1).padStart(2, '0');
+                    const day = String(d.getDate()).padStart(2, '0');
+                    return `${y}-${m}-${day}`;
+                },
+                // Parse un "YYYY-MM-DD" en un objet Date strictement local à minuit
+                parseDate: (str) => {
+                    const [y, m, d] = str.split('-');
+                    return new Date(y, m - 1, d);
+                },
+                // Calcule le nombre de jours entre deux objets Date
+                diffDays: (d1, d2) => Math.round((d2.getTime() - d1.getTime()) / 86400000)
+            };
+
+            // --- 2. API SIMULATEUR LOCALSTORAGE ---
+            const API = {
+                headers: {},
+                async req(ep, method = 'GET', body = null) {
+                    try {
+                        const dbInit = () => {
+                            if (!localStorage.getItem('ccmvr_eq')) {
+                                localStorage.setItem('ccmvr_eq', JSON.stringify([
+                                    { id: 1, name: "Valise de Tablettes (10x iPad)", description: "Lot de 10 tablettes avec applications éducatives installées.", order: 0 },
+                                    { id: 2, name: "Vidéoprojecteur Interactif", description: "Vidéoprojecteur focale courte avec stylet.", order: 1 },
+                                    { id: 3, name: "Kit Robotique Ozobot (6x)", description: "Mini robots pour apprentissage de la programmation.", order: 2 },
+                                    { id: 4, name: "Enceinte Nomade Bluetooth", description: "Enceinte portable puissante avec micro sans fil.", order: 3 },
+                                    { id: 5, name: "Mallette de Casques VR", description: "4 casques de réalité virtuelle autonomes pour visites.", order: 4 }
+                                ]));
+                            }
+                            if (!localStorage.getItem('ccmvr_rs')) {
+                                localStorage.setItem('ccmvr_rs', JSON.stringify([]));
+                            }
+                            if (!localStorage.getItem('ccmvr_nt')) {
+                                localStorage.setItem('ccmvr_nt', JSON.stringify([
+                                    { id: 1, date: "2026-06-25T12:00:00.000Z", author: "Conseiller Pédagogique", content: "Pensez à charger les tablettes après chaque utilisation." },
+                                    { id: 2, date: "2026-06-20T10:00:00.000Z", author: "Animateur Réseau", content: "Le vidéoprojecteur interactif nécessite l'installation du logiciel eBeam sur votre PC." }
+                                ]));
+                            }
+                            if (!localStorage.getItem('ccmvr_st')) {
+                                localStorage.setItem('ccmvr_st', JSON.stringify([
+                                    { setting_key: "reglement", setting_value: "Règlement d'utilisation du matériel pédagogique de la CCMVR :\n1. Le matériel doit être réservé au moins 48 heures à l'avance.\n2. L'emprunteur s'engage à restituer le matériel dans son état d'origine.\n3. En cas de dysfonctionnement, le signaler immédiatement au service technique." }
+                                ]));
+                            }
+                        };
+                        dbInit();
+
+                        const urlParts = ep.split('?');
+                        const tableRaw = urlParts[0];
+                        const queryStr = urlParts[1] || '';
+                        
+                        let tableKey = '';
+                        if (tableRaw === 'equipment') tableKey = 'ccmvr_eq';
+                        else if (tableRaw === 'reservations') tableKey = 'ccmvr_rs';
+                        else if (tableRaw === 'notes') tableKey = 'ccmvr_nt';
+                        else if (tableRaw === 'settings') tableKey = 'ccmvr_st';
+                        
+                        let data = JSON.parse(localStorage.getItem(tableKey) || '[]');
+
+                        if (method === 'GET') {
+                            if (queryStr.includes('setting_key=eq.reglement')) {
+                                return data.filter(item => item.setting_key === 'reglement');
+                            }
+                            if (tableRaw === 'equipment') {
+                                data.sort((a, b) => a.order - b.order);
+                            } else if (tableRaw === 'notes') {
+                                data.sort((a, b) => new Date(b.date) - new Date(a.date));
+                            }
+                            return data;
+                        } 
+                        else if (method === 'POST') {
+                            const newRecord = { ...body };
+                            if (!newRecord.id && tableRaw !== 'settings') {
+                                newRecord.id = Date.now() + Math.floor(Math.random() * 1000);
+                            }
+                            if (tableRaw === 'reservations') {
+                                newRecord.created_at = new Date().toISOString();
+                            } else if (tableRaw === 'notes') {
+                                newRecord.date = new Date().toISOString();
+                            }
+                            data.push(newRecord);
+                            localStorage.setItem(tableKey, JSON.stringify(data));
+                            return true;
+                        } 
+                        else if (method === 'DELETE') {
+                            const match = queryStr.match(/id=eq\.(\d+)/);
+                            if (match) {
+                                const idToDel = parseInt(match[1]);
+                                data = data.filter(item => item.id !== idToDel);
+                                localStorage.setItem(tableKey, JSON.stringify(data));
+                                return true;
+                            }
+                            return false;
+                        } 
+                        else if (method === 'PATCH') {
+                            if (queryStr.includes('setting_key=eq.reglement')) {
+                                let record = data.find(item => item.setting_key === 'reglement');
+                                if (record) {
+                                    Object.assign(record, body);
+                                } else {
+                                    data.push({ setting_key: 'reglement', ...body });
+                                }
+                                localStorage.setItem(tableKey, JSON.stringify(data));
+                                return true;
+                            }
+                            const match = queryStr.match(/id=eq\.(\d+)/);
+                            if (match) {
+                                const idToUpdate = parseInt(match[1]);
+                                let record = data.find(item => item.id === idToUpdate);
+                                if (record) {
+                                    Object.assign(record, body);
+                                    localStorage.setItem(tableKey, JSON.stringify(data));
+                                    return true;
+                                }
+                            }
+                            return false;
+                        }
+                    } catch (e) {
+                        console.error("Erreur API Simulée:", e);
+                        return null;
+                    }
+                }
+            };
+
+            // État de l'application
+            const state = {
+                date: new Date(),
+                miniDate: new Date(),
+                data: { eq: [], rs: [], nt: [], reglement: "" },
+                admin: false,
+                detId: null,
+                // États du système de sélection au clic
+                selStart: null,
+                selEnd: null,
+                clickStep: 0
+            };
+
+            // --- 3. APPLICATION ---
+            window.app = {
+                // Etape 1: Vérification du code d'accès
+                checkAccess() {
+                    const input = document.getElementById('global-access-code').value;
+                    if (input === GLOBAL_CODE) {
+                        document.getElementById('access-lock-screen').style.display = 'none';
+                        document.getElementById('app-container').style.display = 'flex';
+                        this.init();
+                    } else {
+                        document.getElementById('access-error').style.display = 'block';
+                    }
+                },
+
+                // Etape 2: Initialisation
+                async init() {
+                    document.getElementById('data-loader').style.display = 'flex';
+                    setTimeout(() => {
+                        if (document.getElementById('data-loader').style.display !== 'none')
+                            document.getElementById('connection-error').style.display = 'block';
+                    }, 6000);
+
+                    await this.refresh();
+                    document.getElementById('data-loader').style.display = 'none';
+                },
+
+                async refresh() {
+                    const [e, r, n, s] = await Promise.all([
+                        API.req('equipment?select=*&order=order.asc'),
+                        API.req('reservations?select=*'),
+                        API.req('notes?select=*&order=date.desc'), // Trier notes par date décroissante
+                        API.req('settings?setting_key=eq.reglement') // Récupérer le règlement
+                    ]);
+
+                    if (e) state.data.eq = e;
+                    if (r) state.data.rs = r;
+                    if (n) state.data.nt = n;
+
+                    if (s && s.length > 0) {
+                        state.data.reglement = s[0].setting_value;
+                    } else {
+                        state.data.reglement = "Aucun règlement n'a été défini pour le moment.";
+                    }
+
+                    // MAJ du texte dans la modale et l'admin
+                    document.getElementById('reglement-content').innerText = state.data.reglement;
+
+                    this.render();
+                    if (state.admin) this.renderAdmin();
+                },
+
+                // --- RENDU GRAPHIQUE ---
+                render() {
+                    const y = state.date.getFullYear(), m = state.date.getMonth();
+                    const daysInMonth = new Date(y, m + 1, 0).getDate();
+                    document.getElementById('current-month').innerText = state.date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+
+                    const grid = document.getElementById('calendar');
+                    grid.innerHTML = '';
+                    grid.style.setProperty('--days-in-month', daysInMonth);
+
+                    // Header Dates
+                    grid.appendChild(this.el('div', 'cal-cell cal-header', 'Matériel'));
+                    for (let i = 1; i <= daysInMonth; i++) {
+                        const d = new Date(y, m, i);
+                        const we = d.getDay() === 0 || d.getDay() === 6;
+                        grid.appendChild(this.el('div', `cal-cell cal-header ${we ? 'cal-weekend' : ''}`, `<div>${d.toLocaleDateString('fr-FR', { weekday: 'narrow' })}</div><div>${i}</div>`));
+                    }
+
+                    const firstDayStr = utils.formatDate(new Date(y, m, 1));
+                    const lastDayStr = utils.formatDate(new Date(y, m, daysInMonth));
+
+                    // Lignes Matériel
+                    state.data.eq.forEach(e => {
+                        const rowHead = this.el('div', 'equip-row-header', `<span>${e.name}</span> <i class="fas fa-info-circle" style="color:#cbd5e1"></i>`);
+                        rowHead.onclick = (ev) => {
+                            if (state.admin) {
+                                // Si on clique sur l'icône d'info, on ouvre la modale de détails (pour éditer la description par ex)
+                                if (ev.target.classList.contains('fa-info-circle')) {
+                                    this.showDet(e.id);
+                                } else {
+                                    // Sinon, comportement actuel : prompt pour le nom
+                                    const newName = prompt("Nouveau nom pour : " + e.name, e.name);
+                                    if (newName && newName !== e.name) this.updateEq(e.id, { name: newName });
+                                }
+                            } else {
+                                this.showDet(e.id);
+                            }
+                        };
+                        grid.appendChild(rowHead);
+
+                        for (let i = 1; i <= daysInMonth; i++) {
+                            const cellDateStr = utils.formatDate(new Date(y, m, i));
+                            const cell = this.el('div', 'cal-cell');
+                            if ((new Date(y, m, i).getDay() % 6) === 0) cell.classList.add('cal-weekend');
+
+                            // Affichage Réservations
+                            const res = state.data.rs.filter(r => r.equipId == e.id);
+                            res.forEach(r => {
+                                // Si la réservation traverse cette cellule
+                                if (cellDateStr >= r.start && cellDateStr <= r.end) {
+                                    // On affiche la barre UNIQUEMENT le premier jour de la résa OU le 1er du mois
+                                    if (cellDateStr === r.start || i === 1) {
+                                        const bar = this.el('div', `resa-bar ${state.admin ? 'admin-mode' : ''}`, r.assoName);
+
+                                        // Calcul précis du point de départ et de fin dans le mois courant
+                                        const startStr = (r.start < firstDayStr) ? firstDayStr : r.start;
+                                        const endStr = (r.end > lastDayStr) ? lastDayStr : r.end;
+
+                                        const startD = utils.parseDate(startStr);
+                                        const endD = utils.parseDate(endStr);
+
+                                        // Nombre de jours couverts visuellement ce mois-ci
+                                        const span = utils.diffDays(startD, endD) + 1;
+
+                                        // Largeur exacte: nb jours * 100% + bordures pour éviter tout décalage visuel
+                                        bar.style.width = `calc(${span * 100}% + ${span - 1}px)`;
+                                        bar.title = `${r.assoName} (Du ${r.start.split('-').reverse().join('/')} au ${r.end.split('-').reverse().join('/')})`;
+
+                                        bar.onclick = (ev) => {
+                                            ev.stopPropagation();
+                                            if (state.admin) { if (confirm(`Supprimer la réservation de ${r.assoName} ?`)) this.delRes(r.id); }
+                                            else alert(`Réservé par : ${r.assoName}\nDu : ${r.start.split('-').reverse().join('/')}\nAu : ${r.end.split('-').reverse().join('/')}`);
+                                        };
+                                        cell.appendChild(bar);
+                                    }
+                                }
+                            });
+                            grid.appendChild(cell);
+                        }
+                    });
+                },
+
+                // --- NAVIGATION & UTILS ---
+                el(tag, cls, html) {
+                    const e = document.createElement(tag);
+                    if (cls) e.className = cls;
+                    if (html) e.innerHTML = html;
+                    return e;
+                },
+                navMonth(d) { state.date.setMonth(state.date.getMonth() + d); this.render(); },
+
+                // --- ACTIONS UTILISATEUR ---
+                openModal(id) {
+                    if (id === 'modal-res') {
+                        document.getElementById('res-equip').innerHTML = state.data.eq.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
+                        this.resetMiniSelection();
+                    }
+                    document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none');
+                    document.getElementById(id).style.display = 'flex';
+                },
+                closeModals() { document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none'); },
+
+                async saveResa() {
+                    const b = {
+                        equipId: document.getElementById('res-equip').value,
+                        assoName: document.getElementById('res-asso').value,
+                        start: document.getElementById('res-start').value,
+                        end: document.getElementById('res-end').value,
+                        createdAt: new Date().toISOString()
+                    };
+
+                    if (!b.assoName || !b.start || !b.end) return alert('Merci de tout remplir.');
+                    if (b.start > b.end) return alert('La date de fin est antérieure à la date de début !');
+
+                    // Vérification limite 4 semaines (28 jours)
+                    const startD = utils.parseDate(b.start);
+                    const endD = utils.parseDate(b.end);
+                    const spanDays = utils.diffDays(startD, endD);
+                    if (spanDays > 28) return alert('La durée maximale de réservation est de 4 semaines (28 jours max).');
+
+                    // Conflit de dates
+                    const conflict = state.data.rs.find(r => r.equipId == b.equipId && b.start <= r.end && b.end >= r.start);
+                    if (conflict) return alert('Ce créneau est déjà réservé en partie ou totalement.');
+
+                    const btn = document.querySelector('#modal-res .btn-primary');
+                    btn.disabled = true; btn.innerText = "Enregistrement...";
+
+                    await API.req('reservations', 'POST', b);
+
+                    btn.disabled = false; btn.innerText = "Confirmer la réservation";
+                    this.closeModals();
+                    this.refresh();
+                    alert('Réservation confirmée avec succès !');
+                },
+                async delRes(id) { await API.req(`reservations?id=eq.${id}`, 'DELETE'); this.refresh(); },
+
+                // --- DÉTAILS & NOTES ---
+                showDet(id) {
+                    state.detId = id;
+                    const e = state.data.eq.find(x => x.id == id);
+                    const titleEl = document.getElementById('det-title');
+                    const descEl = document.getElementById('det-desc');
+
+                    titleEl.innerText = e.name;
+                    descEl.innerText = e.description || 'Aucune description disponible.';
+
+                    // Mode Admin : permettre l'édition par clic
+                    if (state.admin) {
+                        titleEl.style.cursor = 'pointer';
+                        titleEl.title = "Cliquer pour modifier le nom";
+                        titleEl.onclick = () => {
+                            const newName = prompt("Nouveau nom :", e.name);
+                            if (newName && newName !== e.name) this.updateEq(e.id, { name: newName });
+                        };
+
+                        descEl.style.cursor = 'pointer';
+                        descEl.title = "Cliquer pour modifier la description";
+                        descEl.onclick = () => {
+                            const newDesc = prompt("Nouvelle description :", e.description || "");
+                            if (newDesc !== null && newDesc !== e.description) this.updateEq(e.id, { description: newDesc });
+                        };
+                    } else {
+                        titleEl.style.cursor = 'default';
+                        titleEl.onclick = null;
+                        descEl.style.cursor = 'default';
+                        descEl.onclick = null;
+                    }
+
+                    const notes = state.data.nt.filter(n => n.equipId == id);
+                    document.getElementById('notes-list').innerHTML = notes.map(n => {
+                        // Formatage de la date en local (ex: 18/02/2026 à 14:30)
+                        const fDate = n.date ? new Date(n.date).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }) : '';
+                        // Bouton suppression pour admin
+                        const delBtn = state.admin ? `<button onclick="app.delNote(${n.id})" title="Supprimer" style="float:right; color:#ef4444; border:none; background:none; cursor:pointer; font-size:1.1rem;"><i class="fas fa-trash"></i></button>` : '';
+
+                        return `<div style="background:#f1f5f9; padding:10px; margin-bottom:8px; border-radius:6px; font-size:0.9rem; border-left: 3px solid #cbd5e1;">
+                        ${delBtn}
+                        <b>${n.author}</b> <span style="font-size:0.75rem; color:#64748b; margin-left: 5px;">(${fDate})</span><br>
+                        <span style="display:block; margin-top:5px; color:#334155;">${n.text}</span>
+                    </div>`;
+                    }).join('') || '<div style="color:#94a3b8; text-align:center; padding: 10px;">Aucune note existante</div>';
+
+                    this.openModal('modal-det');
+                },
+                async addNote() {
+                    const txt = document.getElementById('note-text').value;
+                    if (!txt) return;
+                    await API.req('notes', 'POST', {
+                        equipId: state.detId,
+                        author: document.getElementById('note-auth').value || 'Anonyme',
+                        text: txt,
+                        date: new Date().toISOString() // Horodatage précis
+                    });
+                    document.getElementById('note-text').value = '';
+                    await this.refresh();
+                    this.showDet(state.detId);
+                },
+                async delNote(id) {
+                    if (confirm('Voulez-vous vraiment supprimer cette note ?')) {
+                        await API.req(`notes?id=eq.${id}`, 'DELETE');
+                        await this.refresh();
+                        this.showDet(state.detId);
+                    }
+                },
+
+                // --- MINI CALENDRIER INTÉRACTIF ---
+                navMini(d) { state.miniDate.setMonth(state.miniDate.getMonth() + d); this.updateMiniCal(); },
+                resetMiniSelection() {
+                    state.selStart = null;
+                    state.selEnd = null;
+                    state.clickStep = 0;
+                    document.getElementById('res-start').value = '';
+                    document.getElementById('res-end').value = '';
+                    this.updateMiniCal();
+                },
+                syncManualDates() {
+                    // Synchroniser si l'utilisateur saisit au clavier
+                    state.selStart = document.getElementById('res-start').value;
+                    state.selEnd = document.getElementById('res-end').value;
+                    if (state.selStart && state.selEnd && state.selStart !== state.selEnd) state.clickStep = 2;
+                    else if (state.selStart) state.clickStep = 1;
+                    else state.clickStep = 0;
+                    this.updateMiniCal();
+                },
+                handleMiniClick(dStr, isBusy) {
+                    if (isBusy) return;
+
+                    const eid = document.getElementById('res-equip').value;
+                    const res = state.data.rs.filter(r => r.equipId == eid);
+
+                    if (state.clickStep === 0 || state.clickStep === 2) {
+                        // Clic 1 ou Clic 3 (Réinitialisation)
+                        state.selStart = dStr;
+                        state.selEnd = dStr; // Par défaut fin = début
+                        state.clickStep = 1;
+                    } else if (state.clickStep === 1) {
+                        // Clic 2
+                        let s = state.selStart;
+                        let e = dStr;
+                        // Inverser si le 2ème clic est antérieur au premier
+                        if (e < s) { e = state.selStart; s = dStr; }
+
+                        // Vérifier si la plage sélectionnée croise une réservation existante
+                        const hasConflict = res.some(r => r.end >= s && r.start <= e);
+                        if (hasConflict) {
+                            alert("Des jours déjà réservés se trouvent dans cette période. La sélection a été réinitialisée.");
+                            state.selStart = dStr;
+                            state.selEnd = dStr;
+                            state.clickStep = 1;
+                        } else {
+                            // Limiter à 28 jours dès le clic
+                            const startD = utils.parseDate(s);
+                            const endD = utils.parseDate(e);
+                            if (utils.diffDays(startD, endD) > 28) {
+                                alert("La réservation ne peut excéder 4 semaines (28 jours max).");
+                                return;
+                            }
+
+                            state.selStart = s;
+                            state.selEnd = e;
+                            state.clickStep = 2;
+                        }
+                    }
+
+                    // Mettre à jour les champs de formulaire visuels
+                    document.getElementById('res-start').value = state.selStart;
+                    document.getElementById('res-end').value = state.selEnd;
+                    this.updateMiniCal();
+                },
+                updateMiniCal() {
+                    const eid = document.getElementById('res-equip').value;
+                    const y = state.miniDate.getFullYear(), m = state.miniDate.getMonth();
+                    document.getElementById('mini-month').innerText = state.miniDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+
+                    const grid = document.getElementById('mini-cal');
+                    grid.innerHTML = '';
+
+                    const dim = new Date(y, m + 1, 0).getDate();
+                    const off = (new Date(y, m, 1).getDay() || 7) - 1;
+
+                    // Cases vides avant le 1er du mois
+                    for (let i = 0; i < off; i++) grid.appendChild(this.el('div'));
+
+                    const res = state.data.rs.filter(r => r.equipId == eid);
+
+                    for (let i = 1; i <= dim; i++) {
+                        const dStr = utils.formatDate(new Date(y, m, i));
+                        const isBusy = res.some(r => dStr >= r.start && dStr <= r.end);
+
+                        // Vérifier si ce jour fait partie de la sélection actuelle
+                        const isSelected = (state.selStart && dStr === state.selStart) ||
+                            (state.selEnd && dStr === state.selEnd) ||
+                            (state.selStart && state.selEnd && dStr > state.selStart && dStr < state.selEnd);
+
+                        let className = 'mini-day ';
+                        if (isBusy) className += 'day-busy';
+                        else if (isSelected) className += 'day-sel';
+                        else className += 'day-free';
+
+                        const div = this.el('div', className, i);
+                        if (!isBusy) {
+                            div.onclick = () => this.handleMiniClick(dStr, isBusy);
+                        }
+                        grid.appendChild(div);
+                    }
+                },
+
+                // --- ADMIN (Simulation locale) ---
+                async login() {
+                    const user = document.getElementById('login-user').value;
+                    const pass = document.getElementById('login-pass').value;
+
+                    const btn = document.querySelector('#modal-login .btn-primary');
+                    btn.disabled = true; btn.innerText = "Connexion...";
+
+                    // Simuler un léger délai
+                    await new Promise(r => setTimeout(r, 400));
+
+                    if (pass === 'MAJA00') {
+                        state.admin = true;
+                        document.getElementById('admin-panel').style.display = 'block';
+                        document.getElementById('admin-badge').style.display = 'block';
+                        document.getElementById('btn-login').style.display = 'none';
+                        document.getElementById('btn-logout').style.display = 'inline-flex';
+                        this.closeModals();
+                        this.render();
+                        this.renderAdmin();
+                    } else {
+                        alert("Identifiants incorrects (Le mot de passe de démonstration est MAJA00).");
+                    }
+
+                    btn.disabled = false; btn.innerText = "Entrer";
+                },
+                logout() {
+                    state.admin = false;
+                    document.getElementById('admin-panel').style.display = 'none';
+                    document.getElementById('admin-badge').style.display = 'none';
+                    document.getElementById('btn-login').style.display = 'inline-flex';
+                    document.getElementById('btn-logout').style.display = 'none';
+                    document.getElementById('login-pass').value = '';
+                    this.render();
+                },
+                renderAdmin() {
+                    document.getElementById('admin-list').innerHTML = state.data.eq.map((e, idx) => `
+                    <div class="admin-item" style="flex-direction: column; align-items: stretch; gap: 5px;">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <div style="display:flex; flex-direction:column; gap:0;">
+                               <button onclick="app.moveEq(${e.id}, -1)" ${idx === 0 ? 'disabled' : ''} style="border:none; background:none; cursor:pointer; height:12px; color:#94a3b8; padding:0;" title="Monter"><i class="fas fa-caret-up"></i></button>
+                               <button onclick="app.moveEq(${e.id}, 1)" ${idx === state.data.eq.length - 1 ? 'disabled' : ''} style="border:none; background:none; cursor:pointer; height:12px; color:#94a3b8; padding:0;" title="Descendre"><i class="fas fa-caret-down"></i></button>
+                            </div>
+                            <input type="number" value="${e.order}" onchange="app.updateEq(${e.id}, {order: parseInt(this.value)})" style="width:45px; padding:3px; border:1px solid #e2e8f0; border-radius:4px; text-align:center; font-size:0.8rem;" title="Changer l'ordre manuellement">
+                            <input type="text" value="${e.name}" onblur="if(this.value !== '${e.name}') app.updateEq(${e.id}, {name: this.value})" style="flex:1; border:1px solid transparent; padding:4px 8px; border-radius:4px; font-weight:600; font-size:0.9rem; background:transparent;" onfocus="this.style.borderColor='#cbd5e1'; this.style.background='#f8fafc'" onblur="this.style.borderColor='transparent'; this.style.background='transparent'">
+                            <button onclick="app.delEq(${e.id})" style="color:#fecaca; border:none; background:none; cursor:pointer; padding:5px;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#fecaca'" title="Supprimer matériel"><i class="fas fa-trash"></i></button>
+                        </div>
+                        <input type="text" value="${e.description || ''}" placeholder="Description" onblur="if(this.value !== '${(e.description || '').replace(/'/g, "\\'")}') app.updateEq(${e.id}, {description: this.value})" style="border:1px solid transparent; padding:2px 8px; border-radius:4px; font-size:0.8rem; background:transparent; font-style: italic; color: #64748b;" onfocus="this.style.borderColor='#cbd5e1'; this.style.background='#f8fafc'" onblur="this.style.borderColor='transparent'; this.style.background='transparent'">
+                    </div>`).join('');
+
+                    // Remplir le champ règlement avec la valeur actuelle
+                    document.getElementById('admin-reglement-text').value = state.data.reglement;
+                },
+
+                async updateEq(id, updates) {
+                    await API.req(`equipment?id=eq.${id}`, 'PATCH', updates);
+                    await this.refresh();
+
+                    // Si la modale de détails est ouverte pour cet objet, on la rafraîchit pour voir les modifs
+                    if (state.detId === id && document.getElementById('modal-det').style.display === 'flex') {
+                        this.showDet(id);
+                    }
+                },
+
+                async moveEq(id, direction) {
+                    const idx = state.data.eq.findIndex(x => x.id === id);
+                    if (idx === -1) return;
+                    const otherIdx = idx + direction;
+                    if (otherIdx < 0 || otherIdx >= state.data.eq.length) return;
+
+                    const current = state.data.eq[idx];
+                    const other = state.data.eq[otherIdx];
+
+                    // Swap orders
+                    const oldOrder = current.order;
+                    // On utilise une valeur temporaire pour éviter les conflits si contrainte unique (même si Supabase n'en a pas forcément par défaut ici)
+                    await API.req(`equipment?id=eq.${current.id}`, 'PATCH', { order: -999 });
+                    await API.req(`equipment?id=eq.${other.id}`, 'PATCH', { order: oldOrder });
+                    await API.req(`equipment?id=eq.${current.id}`, 'PATCH', { order: other.order });
+
+                    this.refresh();
+                },
+
+                // --- GESTION DE L'ACCORDÉON DE L'ADMIN ---
+                toggleAdminSection(contentId, iconId) {
+                    const content = document.getElementById(contentId);
+                    const icon = document.getElementById(iconId);
+                    if (content.style.display === 'block') {
+                        content.style.display = 'none';
+                        icon.style.transform = 'rotate(0deg)';
+                    } else {
+                        content.style.display = 'block';
+                        icon.style.transform = 'rotate(180deg)';
+                    }
+                },
+
+                async addEquip() {
+                    const name = document.getElementById('new-name').value;
+                    if (!name) return;
+                    const max = state.data.eq.reduce((m, e) => Math.max(m, e.order || 0), 0);
+                    await API.req('equipment', 'POST', {
+                        name: name,
+                        description: document.getElementById('new-desc').value,
+                        order: max + 1
+                    });
+                    document.getElementById('new-name').value = '';
+                    document.getElementById('new-desc').value = '';
+                    this.refresh();
+                },
+                async delEq(id) {
+                    if (confirm('Supprimer cet équipement et tout son historique de réservation ?')) {
+                        await API.req(`equipment?id=eq.${id}`, 'DELETE');
+                        this.refresh();
+                    }
+                },
+                async sort() {
+                    const s = [...state.data.eq].sort((a, b) => a.name.localeCompare(b.name));
+                    for (let i = 0; i < s.length; i++) await API.req(`equipment?id=eq.${s[i].id}`, 'PATCH', { order: i });
+                    this.refresh();
+                },
+
+                // --- GESTION DU RÈGLEMENT ---
+                async saveReglement() {
+                    const txt = document.getElementById('admin-reglement-text').value;
+                    if (!txt) return alert("Le règlement ne peut pas être vide.");
+
+                    const btn = document.getElementById('btn-save-reglement');
+                    btn.innerText = "Enregistrement en cours...";
+                    btn.disabled = true;
+
+                    // Vérifier s'il existe déjà dans la base
+                    const existing = await API.req('settings?setting_key=eq.reglement');
+                    if (existing && existing.length > 0) {
+                        await API.req('settings?setting_key=eq.reglement', 'PATCH', { setting_value: txt });
+                    } else {
+                        await API.req('settings', 'POST', { setting_key: 'reglement', setting_value: txt });
+                    }
+
+                    await this.refresh();
+
+                    btn.innerText = "Enregistrer les modifications";
+                    btn.disabled = false;
+                    alert("Le règlement a été mis à jour avec succès !");
+                }
+            };
+        })();
+    </script>
+</body>
+
+</html>

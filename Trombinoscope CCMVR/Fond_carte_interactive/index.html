@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cartographie des Services - Marches du Velay-Rochebaron</title>
+    
+    <!-- Meta tags SEO -->
+    <meta name="description" content="Découvrez et filtrez de manière interactive tous les services (Ados, Enfance, Petite Enfance, Solidarités) sur le territoire des Marches du Velay-Rochebaron.">
+    <meta name="author" content="Communauté de Communes">
+    
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <!-- Sidebar Header -->
+            <header class="sidebar-header">
+                <div class="brand">
+                    <div class="logo-container">
+                        <i data-lucide="map-pin" class="logo-icon"></i>
+                    </div>
+                    <div class="brand-text">
+                        <h1>Velay-Rochebaron</h1>
+                        <p>Cartographie des Services</p>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <div class="data-dropdown-container">
+                        <button class="header-action-btn" id="data-manage-btn" title="Gérer les données">
+                            <i data-lucide="database" class="db-icon"></i>
+                        </button>
+                        <div class="data-dropdown-menu" id="data-dropdown-menu">
+                            <button class="dropdown-item" id="export-json-btn">
+                                <i data-lucide="download" class="dropdown-icon"></i>
+                                <span>Exporter JSON</span>
+                            </button>
+                            <button class="dropdown-item" id="import-json-btn">
+                                <i data-lucide="upload" class="dropdown-icon"></i>
+                                <span>Importer JSON</span>
+                            </button>
+                            <button class="dropdown-item danger" id="reset-data-btn">
+                                <i data-lucide="rotate-ccw" class="dropdown-icon"></i>
+                                <span>Réinitialiser aux défauts</span>
+                            </button>
+                        </div>
+                    </div>
+                    <button class="theme-toggle-btn" id="theme-toggle" aria-label="Changer de thème">
+                        <i data-lucide="sun" class="sun-icon"></i>
+                        <i data-lucide="moon" class="moon-icon"></i>
+                    </button>
+                </div>
+            </header>
+            <input type="file" id="import-file-input" accept=".json" style="display: none;">
+
+            <!-- Search & Filters Container -->
+            <section class="controls-section">
+                <!-- Search bar -->
+                <div class="search-box">
+                    <i data-lucide="search" class="search-icon"></i>
+                    <input type="text" id="search-input" placeholder="Rechercher une structure, ville..." autocomplete="off">
+                    <button id="clear-search" class="clear-btn" aria-label="Effacer la recherche">
+                        <i data-lucide="x" class="clear-icon"></i>
+                    </button>
+                </div>
+
+                <!-- Category Filters -->
+                <div class="filter-group">
+                    <label class="filter-label">Catégories</label>
+                    <div class="category-pills" id="category-pills">
+                        <button class="category-pill active" data-category="all">
+                            <span class="pill-dot all"></span>
+                            <span class="pill-name">Toutes</span>
+                            <span class="pill-count" id="count-all">0</span>
+                        </button>
+                        <button class="category-pill" data-category="Ados">
+                            <span class="pill-dot ados"></span>
+                            <span class="pill-name">Ados</span>
+                            <span class="pill-count" id="count-ados">0</span>
+                        </button>
+                        <button class="category-pill" data-category="Enfance (2-11 ans)">
+                            <span class="pill-dot enfance"></span>
+                            <span class="pill-name">Enfance</span>
+                            <span class="pill-count" id="count-enfance">0</span>
+                        </button>
+                        <button class="category-pill" data-category="Petite Enfance (0-6 ans)">
+                            <span class="pill-dot petite-enfance"></span>
+                            <span class="pill-name">Petite Enfance</span>
+                            <span class="pill-count" id="count-petite-enfance">0</span>
+                        </button>
+                        <button class="category-pill" data-category="Solidarités">
+                            <span class="pill-dot solidarites"></span>
+                            <span class="pill-name">Solidarités</span>
+                            <span class="pill-count" id="count-solidarites">0</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Service Filters (Populated Dynamically) -->
+                <div class="filter-group">
+                    <label class="filter-label" for="service-select">Nom du Service</label>
+                    <div class="custom-select-wrapper">
+                        <select id="service-select">
+                            <option value="all">Tous les services</option>
+                        </select>
+                        <i data-lucide="chevron-down" class="select-arrow"></i>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Results Section -->
+            <section class="results-section">
+                <div class="results-header">
+                    <span class="results-count" id="results-count">0 structure(s) trouvée(s)</span>
+                    <div class="results-header-actions">
+                        <button class="reset-filters-btn" id="reset-filters">Réinitialiser</button>
+                    </div>
+                </div>
+                <!-- Results cards list -->
+                <div class="results-list" id="results-list">
+                    <!-- Cards will be injected dynamically -->
+                </div>
+            </section>
+            
+            <!-- Sidebar toggle button for mobile/collapsed state -->
+            <button class="sidebar-toggle" id="sidebar-toggle-btn" aria-label="Masquer la liste">
+                <i data-lucide="chevron-left" class="toggle-icon"></i>
+            </button>
+        </aside>
+
+        <!-- Main Map Area -->
+        <main class="map-area">
+            <div id="map"></div>
+        </main>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Local JS files -->
+    <script src="boundaries.js"></script>
+    <script src="features.js"></script>
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+
+    <!-- Edit/Add Modal -->
+    <div class="modal-overlay" id="service-modal">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h2 id="modal-title">Modifier la structure</h2>
+                <button class="close-modal-btn" id="close-modal" aria-label="Fermer">&times;</button>
+            </header>
+            <form id="service-form" class="modal-form">
+                <input type="hidden" id="form-id">
+                
+                <div class="form-group">
+                    <label for="form-structure">Nom de la structure *</label>
+                    <input type="text" id="form-structure" required placeholder="Ex: MJC, Crèche, ...">
+                </div>
+                
+                <div class="form-group">
+                    <label for="form-category">Catégorie *</label>
+                    <div class="custom-select-wrapper">
+                        <select id="form-category" required>
+                            <option value="Ados">Ados</option>
+                            <option value="Enfance (2-11 ans)">Enfance (2-11 ans)</option>
+                            <option value="Petite Enfance (0-6 ans)">Petite Enfance (0-6 ans)</option>
+                            <option value="Solidarités">Solidarités</option>
+                        </select>
+                        <i data-lucide="chevron-down" class="select-arrow"></i>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="form-service">Nom du service *</label>
+                    <input type="text" id="form-service" required placeholder="Ex: ALSH Périscolaire, Relais Petite Enfance, ...">
+                </div>
+                
+                <div class="form-group">
+                    <label for="form-address">Adresse *</label>
+                    <input type="text" id="form-address" required placeholder="Ex: 25 Rue du Stade">
+                </div>
+                
+                <div class="form-group">
+                    <label for="form-cp-ville">Code Postal & Ville *</label>
+                    <input type="text" id="form-cp-ville" required placeholder="Ex: 43120 Saint-Julien-sur-Loire">
+                </div>
+                
+                <div class="form-group">
+                    <button type="button" class="btn btn-secondary btn-search-api" id="search-address-api-btn">
+                        <i data-lucide="search"></i>
+                        <span>Rechercher les coordonnées de l'adresse (API)</span>
+                    </button>
+                </div>
+                
+                <div class="api-settings-container">
+                    <button type="button" class="api-settings-toggle" id="api-settings-toggle">
+                        <i data-lucide="settings" class="settings-icon"></i>
+                        <span>Options de recherche API</span>
+                        <i data-lucide="chevron-down" class="toggle-arrow"></i>
+                    </button>
+                    <div class="api-settings-content" id="api-settings-content">
+                        <div class="form-group">
+                            <label for="form-api-service">Moteur de géocodage</label>
+                            <div class="custom-select-wrapper">
+                                <select id="form-api-service">
+                                    <option value="ban" selected>Base Adresse Nationale (Recommandé)</option>
+                                    <option value="nominatim">Nominatim (OSM)</option>
+                                </select>
+                                <i data-lucide="chevron-down" class="select-arrow"></i>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="form-api-timeout">Durée maximum (secondes)</label>
+                            <input type="number" id="form-api-timeout" min="1" max="15" value="3">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="form-manager">Gestionnaire *</label>
+                    <input type="text" id="form-manager" required placeholder="Ex: Maison Des Jeunes Et De La Culture">
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="form-lat">Latitude *</label>
+                        <input type="number" id="form-lat" step="0.0000001" required placeholder="45.29009">
+                    </div>
+                    <div class="form-group">
+                        <label for="form-lng">Longitude *</label>
+                        <input type="number" id="form-lng" step="0.0000001" required placeholder="4.16526">
+                    </div>
+                </div>
+                
+                <div class="form-info-msg">
+                    <i data-lucide="info" class="info-icon"></i>
+                    <span>Faites glisser le marqueur sur la carte ou cliquez pour ajuster la position.</span>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancel-modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary" id="save-modal">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

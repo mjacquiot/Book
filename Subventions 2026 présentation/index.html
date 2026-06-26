@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Commission Enfance Jeunesse Solidarité - Subventions 2026</title>
+    <!-- Google Fonts: Outfit & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="app-header">
+        <div class="header-logo">
+            <div class="logo-icon" style="background: transparent; box-shadow: none; width: auto; height: 48px; padding: 0;">
+                <img src="logo.png" alt="Logo" style="height: 48px; width: auto; max-width: 150px; object-fit: contain;">
+            </div>
+            <div class="logo-text">
+                <h1>Commission Enfance Jeunesse Solidarité</h1>
+                <p>Arbitrage et Validation des Subventions aux Associations 2026</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <div class="theme-switch" id="theme-toggle" title="Changer le thème (Sombre/Clair)">
+                <svg class="sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+                <svg class="moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+            </div>
+            <div class="envelope-badge" id="global-envelope-status">
+                <span class="badge-dot"></span>
+                <span class="badge-text">Budget sous contrôle</span>
+            </div>
+        </div>
+    </header>
+
+    <nav class="app-tabs">
+        <button class="tab-btn active" data-tab="tab-dashboard">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+            Synthèse Élus
+        </button>
+        <button class="tab-btn" data-tab="tab-thematics">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+            Analyses Thématiques
+        </button>
+        <button class="tab-btn" data-tab="tab-simulator">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+            Simulateur Commission
+        </button>
+    </nav>
+
+    <main class="app-content">
+        <!-- TAB 1: DASHBOARD -->
+        <section id="tab-dashboard" class="tab-panel active">
+            <div class="kpi-grid">
+                <div class="kpi-card" id="kpi-total-proposed">
+                    <div class="kpi-header">
+                        <span>Total Proposé 2026</span>
+                        <div class="kpi-icon money-color">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                        </div>
+                    </div>
+                    <div class="kpi-value" id="val-total-proposed">0 €</div>
+                    <div class="kpi-footer">
+                        <span class="trend-indicator positive" id="val-total-evolution">+ 0.00%</span>
+                        <span class="trend-label">vs 2025 Acté</span>
+                    </div>
+                </div>
+
+                <div class="kpi-card" id="kpi-total-requested">
+                    <div class="kpi-header">
+                        <span>Total Demandé 2026</span>
+                        <div class="kpi-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+                        </div>
+                    </div>
+                    <div class="kpi-value" id="val-total-requested">0 €</div>
+                    <div class="kpi-footer">
+                        <span class="trend-indicator neutral" id="val-saving">0 €</span>
+                        <span class="trend-label">d'économie proposée</span>
+                    </div>
+                </div>
+
+                <div class="kpi-card" id="kpi-envelope">
+                    <div class="kpi-header">
+                        <span>Enveloppe 2026 de Référence</span>
+                        <div class="kpi-icon envelope-color">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="14" x="2" y="5" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                        </div>
+                    </div>
+                    <div class="kpi-value">
+                        <div class="kpi-value-input-wrapper">
+                            <input type="number" id="input-envelope-target" class="kpi-input-envelope" value="1922061" min="0">
+                            <span class="envelope-unit">€</span>
+                        </div>
+                    </div>
+                    <div class="kpi-footer">
+                        <span class="trend-indicator negative" id="val-envelope-delta">0 €</span>
+                        <span class="trend-label" id="val-envelope-delta-label">sous l'enveloppe de référence</span>
+                    </div>
+                </div>
+
+                <div class="kpi-card" id="kpi-structures">
+                    <div class="kpi-header">
+                        <span>Structures Financées</span>
+                        <div class="kpi-icon struct-color">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M3 7v1a3 3 0 0 0 6 0v-1m0 0V3h12v18H9V11m0-4V3H3v4m0 0a3 3 0 0 0 6 0m0 0a3 3 0 0 0 6 0v-1a3 3 0 0 0-6 0m6 0v1a3 3 0 0 0 6 0v-1M9 21h6"/></svg>
+                        </div>
+                    </div>
+                    <div class="kpi-value" id="val-structures-count">0</div>
+                    <div class="kpi-footer">
+                        <span class="trend-indicator info" id="val-cities-count">0 communes</span>
+                        <span class="trend-label">couvertes</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-charts">
+                <div class="chart-container large">
+                    <h3>Historique des Subventions & Proposition 2026</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="chart-historical"></canvas>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <h3>Répartition 2026 par Pôle d'Activité</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="chart-categories"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: THEMATICS & COMMUNES -->
+        <section id="tab-thematics" class="tab-panel">
+            <div class="thematics-layout">
+                <div class="side-controls">
+                    <h3>Filtres Thématiques</h3>
+                    <div class="filter-group">
+                        <label for="them-city-select">Commune</label>
+                        <select id="them-city-select">
+                            <option value="all">Toutes les communes</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="them-cat-select">Pôle d'Activité</label>
+                        <select id="them-cat-select">
+                            <option value="all">Tous les pôles</option>
+                        </select>
+                    </div>
+                    <div class="filter-group" style="margin-top: 15px; border-top: 1px dashed var(--border-color); padding-top: 15px;">
+                        <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer; color: var(--text-muted); user-select: none;">
+                            <input type="checkbox" id="toggle-communes-chart" style="cursor: pointer;">
+                            <span>Afficher Graphique Communes (Techniciens)</span>
+                        </label>
+                    </div>
+                    
+                    <div class="city-summary-box">
+                        <h4>Subvention par Ville 2026</h4>
+                        <div id="city-ranking-list" class="ranking-list">
+                            <!-- JS populated -->
+                        </div>
+                    </div>
+                    
+                    <div class="city-summary-box" style="margin-top: 15px; border-top: 1px dashed var(--border-color); padding-top: 15px;">
+                        <h4>Subvention par Habitant 2026</h4>
+                        <div id="city-inhabitant-ranking-list" class="ranking-list">
+                            <!-- JS populated -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="thematics-charts">
+                    <div class="chart-container large" id="communes-chart-container" style="display: none;">
+                        <h3 style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                            <span>Subventions Proposées par Commune (2026)</span>
+                            <span id="communes-average-badge" style="font-size: 0.82rem; font-family: 'Outfit', sans-serif; font-weight: 600; background: rgba(255, 159, 67, 0.12); color: #ff9f43; padding: 4px 12px; border-radius: 30px; border: 1px solid rgba(255, 159, 67, 0.25);">Moyenne : -- €/hab</span>
+                        </h3>
+                        <div class="chart-wrapper">
+                            <canvas id="chart-communes"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="cards-list-container">
+                        <h3>Vue d'ensemble par Pôle</h3>
+                        <div id="poles-cards-grid" class="poles-cards-grid">
+                            <!-- JS populated categories -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: SIMULATOR (COMMISSION SESSION) -->
+        <section id="tab-simulator" class="tab-panel">
+            <div class="simulator-header-bar">
+                <div class="sim-title">
+                    <h2>Tableau d'Arbitrage et de Simulation Directe</h2>
+                    <p>Modifiez les valeurs de la colonne <strong>Aide Exceptionnelle</strong> pour simuler les décisions politiques en commission. Les chiffres clés se recalculent à la volée.</p>
+                </div>
+                <div class="sim-kpis">
+                    <div class="sim-kpi-item">
+                        <span class="sim-kpi-label">TOTAL GÉNÉRAL 2026</span>
+                        <span class="sim-kpi-val" id="sim-total-general">0 €</span>
+                    </div>
+                    <div class="sim-kpi-item">
+                        <span class="sim-kpi-label" id="sim-envelope-label">ÉCART ENVELOPPE (1.92M€)</span>
+                        <span class="sim-kpi-val" id="sim-envelope-delta-real">0 €</span>
+                    </div>
+                    <div class="sim-kpi-item">
+                        <span class="sim-kpi-label">ENVELOPPE DE RÉFÉRENCE 2026</span>
+                        <div class="sim-envelope-input-wrapper">
+                            <input type="number" id="sim-envelope-target" class="sim-envelope-input" value="1922061" min="0">
+                            <span class="sim-envelope-unit">€</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-toolbar">
+                <div class="search-box">
+                    <input type="text" id="sim-search-input" placeholder="Rechercher une association, une commune...">
+                </div>
+                <div class="toolbar-filters" style="flex-wrap: wrap;">
+                    <select id="sim-filter-city">
+                        <option value="all">Toutes les communes</option>
+                    </select>
+                    <select id="sim-filter-cat">
+                        <option value="all">Tous les pôles</option>
+                    </select>
+                    <select id="sim-filter-status">
+                        <option value="all">Tous les statuts</option>
+                        <option value="debat">🟡 En débat</option>
+                        <option value="valide">🟢 Validé</option>
+                        <option value="bloque">🔴 Bloqué</option>
+                    </select>
+                    <button class="reset-btn" id="sim-reset-btn">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                        Réinitialiser
+                    </button>
+                    <button class="print-btn" id="sim-export-json-btn" title="Sauvegarder la simulation dans un fichier JSON">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                        Sauvegarder JSON
+                    </button>
+                    <button class="print-btn" id="sim-trigger-import-btn" title="Charger une simulation depuis un fichier JSON">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        Charger JSON
+                    </button>
+                    <input type="file" id="sim-import-file" accept=".json" style="display: none;">
+                    <button class="print-btn" id="sim-print-all-btn">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
+                        Imprimer toutes les fiches
+                    </button>
+                    <button class="print-btn" id="sim-generate-pv-btn" style="background: var(--success); border-color: var(--success); color: white;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+                        Générer le PV de Commission
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table class="data-table" id="subventions-table">
+                    <thead>
+                        <tr>
+                            <th>Commune</th>
+                            <th>Structure / Association</th>
+                            <th>Pôle</th>
+                            <th class="num-col">2025 Acté</th>
+                            <th class="num-col">2026 Demandé</th>
+                            <th class="num-col">Subv. Neutre</th>
+                            <th class="num-col">Prop. Technicien</th>
+                            <th class="num-col" style="width: 140px; background: rgba(var(--primary-rgb), 0.1);">Aide Exceptionnelle</th>
+                            <th style="width: 220px; background: rgba(var(--primary-rgb), 0.05);">Motif Subv. Exceptionnelle 2026</th>
+                            <th class="num-col" style="font-weight: 700;">Proposition Finale</th>
+                            <th style="width: 130px; text-align: center;">Statut</th>
+                            <th style="width: 60px;">Fiche</th>
+                        </tr>
+                    </thead>
+                    <tbody id="subventions-table-body">
+                        <!-- JS populated rows -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <!-- DETAILED MODAL -->
+    <div class="modal-overlay" id="detail-modal">
+        <div class="modal-container">
+            <button class="modal-print" id="modal-print-btn" title="Imprimer cette fiche">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
+            </button>
+            <button class="modal-close" id="modal-close-btn">&times;</button>
+            <div class="modal-header">
+                <span class="modal-category" id="m-category">Pôle</span>
+                <h2 id="m-name">Nom de l'association</h2>
+                <p id="m-commune">Commune</p>
+            </div>
+            <div class="modal-body">
+                <div class="modal-tab-nav">
+                    <button class="modal-tab-btn active" data-modtab="m-tab-budget">Subvention & Proposition</button>
+                    <button class="modal-tab-btn" data-modtab="m-tab-activity">Activité</button>
+                    <button class="modal-tab-btn" data-modtab="m-tab-finance">Santé Financière</button>
+                    <button class="modal-tab-btn" data-modtab="m-tab-formula">Note Explicative (Calcul)</button>
+                </div>
+
+                <!-- MODAL SUB-TAB 1: BUDGET -->
+                <div class="modal-tab-content active" id="m-tab-budget">
+                    <div class="budget-modal-grid">
+                        <div class="history-card">
+                            <h4>Historique des Subventions</h4>
+                            <div class="history-metrics">
+                                <div class="hist-metric">
+                                    <span class="hist-label">2023</span>
+                                    <span class="hist-value" id="m-sub-2023">0 €</span>
+                                </div>
+                                <div class="hist-metric">
+                                    <span class="hist-label">2024</span>
+                                    <span class="hist-value" id="m-sub-2024">0 €</span>
+                                </div>
+                                <div class="hist-metric highlighted">
+                                    <span class="hist-label">2025 Acté</span>
+                                    <span class="hist-value" id="m-sub-2025-acted">0 €</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="instruct-card">
+                            <h4>Instruction 2026</h4>
+                            <div class="inst-grid">
+                                <div class="inst-item">
+                                    <span class="inst-label">Demandé 2026 (activité)</span>
+                                    <span class="inst-value" id="m-requested-2026">0 €</span>
+                                </div>
+                                <div class="inst-item">
+                                    <span class="inst-label">Subvention Neutre</span>
+                                    <span class="inst-value" id="m-neutral-sub">0 €</span>
+                                </div>
+                                <div class="inst-item primary-inst">
+                                    <span class="inst-label">Proposition Technicien</span>
+                                    <span class="inst-value" id="m-proposal-maxime">0 €</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="comments-card">
+                        <div class="comment-block" id="m-commission-comment-block">
+                            <h5>Commentaire Commission (Mandat Précédent)</h5>
+                            <blockquote id="m-commission-comment">Aucun commentaire de commission.</blockquote>
+                        </div>
+                        <div class="comment-block" id="m-justification-block">
+                            <h5>Justification Instructeur / Analyse Technique</h5>
+                            <blockquote id="m-justification">Aucune justification technique de l'instructeur.</blockquote>
+                        </div>
+                        <div class="comment-block">
+                            <h5>Commentaire Technique Global (Instructeur)</h5>
+                            <textarea id="m-global-technical-comment" class="modal-remarks-textarea" placeholder="Saisir l'analyse technique globale de la structure..."></textarea>
+                        </div>
+                        <div class="comment-block">
+                            <h5>Remarques de la Commission (Mandat 2026)</h5>
+                            <textarea id="m-user-remarks" class="modal-remarks-textarea" placeholder="Saisir vos remarques ou notes pour ce mandat..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="cumul-asso-card" id="m-cumul-asso-card" style="display: none;">
+                        <h4>Cumul Multi-Services (Structure complète)</h4>
+                        <div class="cumul-asso-total">
+                            <span>Subvention Totale Proposée :</span>
+                            <strong id="m-cumul-total-val">0 €</strong>
+                        </div>
+                        <div class="cumul-asso-list-wrapper">
+                            <h5>Répartition des subventions proposées par activité :</h5>
+                            <ul id="m-cumul-services-list" class="cumul-asso-list">
+                                <!-- Dynamically populated -->
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MODAL SUB-TAB 2: ACTIVITY -->
+                <div class="modal-tab-content" id="m-tab-activity">
+                    <div class="activity-modal-grid single-card">
+                        <div class="metrics-card">
+                            <h4>Volume Horaire</h4>
+                            <div class="hours-summary" style="flex-wrap: wrap; gap: 15px 10px;">
+                                <div class="hour-item">
+                                    <span class="hour-label">Heures d'Activité 2024</span>
+                                    <span class="hour-val" id="m-hours-2024">0 h</span>
+                                </div>
+                                <div class="hour-item">
+                                    <span class="hour-label">Heures d'Activité 2025</span>
+                                    <span class="hour-val" id="m-hours-2025">0 h</span>
+                                </div>
+                                <div class="hour-item" id="m-hours-evo-container">
+                                    <span class="hour-label">Évolution Heures</span>
+                                    <span class="hour-val" id="m-hours-evolution">0.00%</span>
+                                </div>
+                                <div class="hour-item" id="m-hourly-cost-container">
+                                    <span class="hour-label">Coût horaire collectivité</span>
+                                    <span class="hour-val" id="m-hourly-cost" style="color: var(--primary);">0,00 €/h</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MODAL SUB-TAB 3: FINANCIAL HEALTH -->
+                <div class="modal-tab-content" id="m-tab-finance">
+                    <div class="finance-modal-grid">
+                        <div class="treasury-card">
+                            <h4>Niveau de Trésorerie (avec actifs circulants)</h4>
+                            <div class="treasury-summary">
+                                <div class="t-item">
+                                    <span class="t-label">Trésorerie globale (avec actifs circulants)</span>
+                                    <span class="t-val" id="m-treasury-assets">0 jours</span>
+                                </div>
+                                <div class="t-item">
+                                    <span class="t-label">Trésorerie nette immédiate</span>
+                                    <span class="t-val" id="m-treasury-days">0 jours</span>
+                                </div>
+                            </div>
+                            <div class="treasury-progress-bar">
+                                <div class="t-progress-fill" id="m-treasury-bar" style="width: 0%;"></div>
+                            </div>
+                            <p class="t-disclaimer">Une trésorerie saine (avec actifs circulants) se situe généralement entre 90 et 150 jours de charges de fonctionnement.</p>
+                        </div>
+
+                        <div class="operating-card">
+                            <h4>Budget de Fonctionnement de la Structure</h4>
+                            <table class="finance-table">
+                                <thead>
+                                    <tr>
+                                        <th>Indicateur</th>
+                                        <th>Exercice 2025</th>
+                                        <th>Prévisionnel 2026</th>
+                                        <th>Évolution</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Total des charges</td>
+                                        <td id="m-charges-2025">0 €</td>
+                                        <td id="m-charges-2026">0 €</td>
+                                        <td id="m-charges-evo">0.00%</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Total des produits (Recettes)</td>
+                                        <td id="m-products-2025">0 €</td>
+                                        <td id="m-products-2026">0 €</td>
+                                        <td id="m-products-evo">0.00%</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Charges de personnel</td>
+                                        <td id="m-staff-charges-2025">0 €</td>
+                                        <td id="m-staff-charges-2026">0 €</td>
+                                        <td id="m-staff-charges-evo">0.00%</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Résultat net 2025</td>
+                                        <td colspan="3" id="m-result-2025" style="font-weight: 600;">0 €</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MODAL SUB-TAB 4: FORMULA EXPLANATION -->
+                <div class="modal-tab-content" id="m-tab-formula">
+                    <div class="formula-modal-grid single-card">
+                        <div class="metrics-card">
+                            <h4>Note Explicative du Calcul de la Proposition</h4>
+                            <div class="formula-details-content" id="m-formula-content">
+                                <!-- Dynamically populated by JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PRINT CONTAINER -->
+    <div id="print-container"></div>
+
+    <!-- PRINT PREVIEW / MANAGER MODAL -->
+    <div class="modal-overlay" id="print-manager-modal">
+        <div class="modal-container print-manager-container" style="max-width: 95%; width: 1400px; height: 90vh;">
+            <button class="modal-close" id="print-manager-close-btn">&times;</button>
+            <div class="modal-header" style="padding: 20px 40px 10px 40px;">
+                <span class="modal-category">Impression et Prévisualisation</span>
+                <h2>Gestionnaire d'Impression des Fiches</h2>
+                <p>Configurez et modifiez le contenu de chaque fiche de structure avant de lancer l'impression générale ou l'export.</p>
+            </div>
+            <div class="print-manager-body" style="display: flex; height: calc(100% - 110px); overflow: hidden; border-top: 1px solid var(--border-color);">
+                <!-- Left Control Panel -->
+                <div class="print-manager-controls" style="width: 320px; border-right: 1px solid var(--border-color); padding: 20px; overflow-y: auto; background: var(--bg-card); display: flex; flex-direction: column;">
+                    <h3 style="margin-bottom: 15px; font-family: 'Outfit'; font-size: 1.1rem; color: var(--text-main);">Options Générales</h3>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <button class="print-btn" id="pm-print-now-btn" style="width: 100%; justify-content: center; padding: 12px; background: var(--primary); color: white; margin-bottom: 10px; font-size: 0.95rem;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
+                            Lancer l'impression
+                        </button>
+                    </div>
+
+                    <h4 style="margin-bottom: 10px; font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; letter-spacing: 0.5px;">Sections à inclure</h4>
+                    <div class="pm-section-toggles" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px dashed var(--border-color);">
+                        <label style="display: flex; align-items: center; gap: 8px; font-size: 0.9rem; cursor: pointer; color: var(--text-main);">
+                            <input type="checkbox" id="pm-toggle-budget" checked>
+                            <span>Tableau Budget & Heures</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; font-size: 0.9rem; cursor: pointer; color: var(--text-main);">
+                            <input type="checkbox" id="pm-toggle-finance" checked>
+                            <span>Santé Financière (Trésorerie/Résultat)</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; font-size: 0.9rem; cursor: pointer; color: var(--text-main);">
+                            <input type="checkbox" id="pm-toggle-operating" checked>
+                            <span>Budget de Fonctionnement</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; font-size: 0.9rem; cursor: pointer; color: var(--text-main);">
+                            <input type="checkbox" id="pm-toggle-formula" checked>
+                            <span>Note de Calcul (Explication)</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; font-size: 0.9rem; cursor: pointer; color: var(--text-main);">
+                            <input type="checkbox" id="pm-toggle-comments" checked>
+                            <span>Commentaires & Remarques</span>
+                        </label>
+                    </div>
+
+                    <h4 style="margin-bottom: 10px; font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; letter-spacing: 0.5px;">Structures à imprimer</h4>
+                    <div style="margin-bottom: 12px; display: flex; gap: 8px;">
+                        <button class="reset-btn" id="pm-select-all-btn" style="padding: 4px 8px; font-size: 0.75rem; border: 1px solid var(--border-color); background: var(--bg-app); color: var(--text-main); cursor: pointer; border-radius: 4px;">Tout cocher</button>
+                        <button class="reset-btn" id="pm-deselect-all-btn" style="padding: 4px 8px; font-size: 0.75rem; border: 1px solid var(--border-color); background: var(--bg-app); color: var(--text-main); cursor: pointer; border-radius: 4px;">Tout décocher</button>
+                    </div>
+                    <div id="pm-structures-list" style="display: flex; flex-direction: column; gap: 6px; overflow-y: auto; flex: 1; padding-right: 5px;">
+                        <!-- Populate dynamically by JS -->
+                    </div>
+                </div>
+
+                <!-- Right Live Preview Panel -->
+                <div class="print-manager-preview-pane" style="flex: 1; padding: 25px; overflow-y: auto; background: var(--bg-app); height: 100%;">
+                    <div id="pm-live-preview-content">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
