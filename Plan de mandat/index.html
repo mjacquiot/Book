@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Le Pilote du Mandat</title>
+    <!-- Vue 3 CDN -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app" v-cloak>
+        <!-- Layout -->
+        <div class="layout">
+            <!-- Sidebar -->
+            <nav class="sidebar">
+                <div class="sidebar-header">
+                    <h2>Pilote du Mandat</h2>
+                    <span class="badge">Session Locale</span>
+                </div>
+                <ul class="nav-links">
+                    <li>
+                        <a href="#" :class="{ active: currentView === 'boussole' }" @click.prevent="currentView = 'boussole'">
+                            <i data-lucide="compass"></i> La Boussole
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" :class="{ active: currentView === 'dashboard' }" @click.prevent="currentView = 'dashboard'">
+                            <i data-lucide="layout-dashboard"></i> Synthèse du Projet
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" :class="{ active: currentView === 'arbitrage' }" @click.prevent="currentView = 'arbitrage'">
+                            <i data-lucide="sliders-horizontal"></i> Diagnostic & Arbitrage
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" :class="{ active: currentView === 'parametrage' }" @click.prevent="currentView = 'parametrage'">
+                            <i data-lucide="settings"></i> Paramétrage
+                        </a>
+                    </li>
+                    <li class="nav-section mt-6 mb-2 text-sm font-semibold text-gray px-4">LIVRABLES FINAUX</li>
+                    <li>
+                        <a href="#" :class="{ active: currentView === 'plan_mandat' }" @click.prevent="currentView = 'plan_mandat'">
+                            <i data-lucide="book-open"></i> Plan de Mandat
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" :class="{ active: currentView === 'projet_territoire' }" @click.prevent="currentView = 'projet_territoire'">
+                            <i data-lucide="map"></i> Projet Territoire
+                        </a>
+                    </li>
+                </ul>
+                <div class="sidebar-footer">
+                    <button class="btn-primary w-full" @click="openActionModal(null)">
+                        <i data-lucide="plus"></i> Saisir une idée / action
+                    </button>
+                    <div class="data-actions mt-4">
+                        <button class="btn-outline w-full text-sm" @click="exportData">
+                            <i data-lucide="download"></i> Exporter données
+                        </button>
+                        <button class="btn-outline w-full text-sm mt-2" @click="$refs.fileInput.click()">
+                            <i data-lucide="upload"></i> Importer données
+                        </button>
+                        <input type="file" ref="fileInput" @change="importData" accept=".json" style="display: none">
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Main Content -->
+            <main class="main-content">
+                <!-- Vue: La Boussole -->
+                <div v-if="currentView === 'boussole'" class="view-boussole fade-in">
+                    <header class="view-header">
+                        <h1>Le Plan de Mandat : Définition Stratégique</h1>
+                        <p class="subtitle">L'acte fondateur traduisant un programme électoral en un cadre d'intervention structuré, budgété et évalué.</p>
+                    </header>
+
+                    <div class="boussole-grid">
+                        <section class="boussole-card border-left-blue">
+                            <h3><i data-lucide="Target"></i> 1. Les Composantes Fondamentales</h3>
+                            <ul class="large-list">
+                                <li><strong>Politique (Le Sens) :</strong> Priorités thématiques, identité du territoire.</li>
+                                <li><strong>Opérationnelle (Le Faire) :</strong> Fiches-actions concrètes, calendrier, pilotes.</li>
+                                <li><strong>Financière (Le PPI) :</strong> Traduction budgétaire, capacité d'investissement.</li>
+                                <li><strong>Ressources Humaines :</strong> Adéquation entre projets et compétences internes.</li>
+                            </ul>
+                        </section>
+
+                        <section class="boussole-card border-left-green">
+                            <h3><i data-lucide="Shield"></i> 2. Les Fonctions Stratégiques</h3>
+                            <ul class="large-list">
+                                <li><strong>Outil d'Arbitrage :</strong> Savoir dire "non" pour rester concentré sur les priorités.</li>
+                                <li><strong>Contrat de Management Interne :</strong> Feuille de route pour l'administration et le DGS.</li>
+                                <li><strong>Support de Redevabilité :</strong> Outil de transparence démocratique vers les citoyens.</li>
+                            </ul>
+                        </section>
+                        
+                        <section class="boussole-card border-left-purple">
+                            <h3><i data-lucide="Scale"></i> 3. Commune vs Intercommunalité</h3>
+                            <div class="split-list">
+                                <div>
+                                    <strong><span class="highlight">La Mairie</span></strong>
+                                    <p>Reflet d'un programme majoritaire, axé sur la vie quotidienne et les équipements.</p>
+                                </div>
+                                <div>
+                                    <strong><span class="highlight">L'EPCI</span></strong>
+                                    <p>Projet de territoire complexe, convergence d'intérêts et pacte de solidarité.</p>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="boussole-card border-left-orange">
+                            <h3><i data-lucide="RefreshCw"></i> 4. Le Cycle de Vie</h3>
+                            <div class="cycle-steps">
+                                <div class="step"><span>1</span> Diagnostic</div>
+                                <div class="step"><span>2</span> Élaboration</div>
+                                <div class="step"><span>3</span> Vote</div>
+                                <div class="step"><span>4</span> Pilotage</div>
+                                <div class="step"><span>5</span> Évaluation</div>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+
+                <!-- Vue: Dashboard -->
+                <div v-if="currentView === 'dashboard'" class="view-dashboard fade-in">
+                    <header class="view-header">
+                        <h1>Synthèse du Diagnostic</h1>
+                        <p class="subtitle">Aperçu de la phase d'élaboration et structuration du projet</p>
+                    </header>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon gray"><i data-lucide="lightbulb"></i></div>
+                            <div class="stat-content">
+                                <h3 title="Pistes de travail en cours d'évaluation">En réflexion</h3>
+                                <p class="stat-number">{{ stats.reflexion }}</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon blue"><i data-lucide="check-square"></i></div>
+                            <div class="stat-content">
+                                <h3 title="Projets validés pour ce mandat">Retenu (Mandat)</h3>
+                                <p class="stat-number">{{ stats.retenu }}</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon purple"><i data-lucide="rocket"></i></div>
+                            <div class="stat-content">
+                                <h3 title="Grands projets ou visions structurantes > 2032">Vision Long Terme</h3>
+                                <p class="stat-number">{{ stats.long_terme }}</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon dark"><i data-lucide="layers"></i></div>
+                            <div class="stat-content">
+                                <h3>Total Pistes / Idées</h3>
+                                <p class="stat-number">{{ stats.total }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h2 class="section-title mt-8">Structuration par Thème Majeur</h2>
+                    <div class="axis-summary-list">
+                        <div v-for="axis in data.axes" :key="axis.id" class="axis-summary-card">
+                            <div class="axis-header">
+                                <h3>{{ axis.title }}</h3>
+                                <span class="badge gray">{{ getActionsForAxis(axis.id).length }} fiches</span>
+                            </div>
+                            <!-- Mini Progress Bar -->
+                            <div class="progress-container mt-4">
+                                <div class="progress-bar-segment tooltip-container" 
+                                    :style="{ width: getAxisStat(axis.id, 'reflexion').percent + '%', backgroundColor: 'var(--color-gray)' }">
+                                    <span v-if="getAxisStat(axis.id, 'reflexion').count > 0" class="tooltip">Réflexion: {{ getAxisStat(axis.id, 'reflexion').count }}</span>
+                                </div>
+                                <div class="progress-bar-segment tooltip-container" 
+                                    :style="{ width: getAxisStat(axis.id, 'retenu').percent + '%', backgroundColor: 'var(--color-blue)' }">
+                                    <span v-if="getAxisStat(axis.id, 'retenu').count > 0" class="tooltip">Retenu: {{ getAxisStat(axis.id, 'retenu').count }}</span>
+                                </div>
+                                <div class="progress-bar-segment tooltip-container" 
+                                    :style="{ width: getAxisStat(axis.id, 'long_terme').percent + '%', backgroundColor: 'var(--color-purple)' }">
+                                    <span v-if="getAxisStat(axis.id, 'long_terme').count > 0" class="tooltip">Long Terme: {{ getAxisStat(axis.id, 'long_terme').count }}</span>
+                                </div>
+                            </div>
+                            <div class="axis-legend mt-2 flex gap-4 text-sm">
+                                <span><span class="dot gray"></span> Réflexion ({{ getAxisStat(axis.id, 'reflexion').count }})</span>
+                                <span><span class="dot blue"></span> Retenu ({{ getAxisStat(axis.id, 'retenu').count }})</span>
+                                <span><span class="dot purple"></span> Long Terme ({{ getAxisStat(axis.id, 'long_terme').count }})</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Vue: Arbitrage -->
+                <div v-if="currentView === 'arbitrage'" class="view-arbitrage fade-in">
+                    <header class="view-header flex justify-between items-center">
+                        <div>
+                            <h1>Diagnostic & Arbitrage</h1>
+                            <p class="subtitle">Sélection et organisation des idées pour construire le projet</p>
+                        </div>
+                        <button class="btn-primary" @click="openActionModal(null)">
+                            <i data-lucide="plus"></i> Saisir une Idée
+                        </button>
+                    </header>
+
+                    <div v-if="data.axes.length === 0" class="empty-state">
+                        <i data-lucide="inbox" class="giant-icon"></i>
+                        <h2>Aucune thématique définie</h2>
+                        <p>Commencez par paramétrer vos axes ou ajouter une idée pour amorcer le tri.</p>
+                        <button class="btn-primary mt-4" @click="currentView = 'parametrage'">Aller au Paramétrage</button>
+                    </div>
+
+                    <div class="axis-list">
+                        <div v-for="axis in data.axes" :key="axis.id" class="axis-block">
+                            <div class="axis-title-band">
+                                <h2>Axe {{ axis.order }} : {{ axis.title }}</h2>
+                            </div>
+                            
+                            <div class="actions-table-wrapper mt-4">
+                                <table class="actions-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Idée / Fiche</th>
+                                            <th>Élu Référent</th>
+                                            <th>Échéance</th>
+                                            <th>Statut (Phase Diagnostic)</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="action in getActionsForAxis(axis.id)" :key="action.id" class="action-row">
+                                            <td class="action-title-cell">
+                                                <strong>{{ action.title }}</strong>
+                                                <p v-if="action.description" class="action-desc-trunc">{{ action.description }}</p>
+                                            </td>
+                                            <td>{{ getEluName(action.referent_id) || 'Non assigné' }}</td>
+                                            <td>
+                                                <select class="year-select" v-model="action.target_year" @change="saveData">
+                                                    <option value="">Non défini</option>
+                                                    <option v-for="year in Array.from({length: 27}, (_, i) => 2024 + i)" :value="year">{{year}}</option>
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <select class="status-select" 
+                                                        :class="action.status" 
+                                                        v-model="action.status"
+                                                        @change="saveData">
+                                                    <option value="reflexion">En réflexion</option>
+                                                    <option value="retenu">Retenu (Mandat)</option>
+                                                    <option value="long_terme">Horizon Long Terme</option>
+                                                </select>
+                                            </td>
+                                            <td class="action-controls">
+                                                <button class="icon-btn" title="Modifier" @click="openActionModal(action)">
+                                                    <i data-lucide="edit-2"></i>
+                                                </button>
+                                                <button class="icon-btn text-red" title="Supprimer" @click="deleteAction(action.id)">
+                                                    <i data-lucide="trash-2"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr v-if="getActionsForAxis(axis.id).length === 0">
+                                            <td colspan="5" class="text-center py-4 text-gray">Aucune idée pour cet axe</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Vue: Plan de Mandat (Chronogramme) -->
+                <div v-if="currentView === 'plan_mandat'" class="view-timeline fade-in">
+                    <header class="view-header print-header">
+                        <h1>Le Plan de Mandat</h1>
+                        <p class="subtitle">Chronogramme des actions actées pour la réalisation du mandat.</p>
+                        <button class="btn-outline hide-print" @click="window.print()"><i data-lucide="printer"></i> Imprimer</button>
+                    </header>
+
+                    <div v-if="timelineMandat.length === 0" class="empty-state">
+                        <i data-lucide="file-check" class="giant-icon"></i>
+                        <h2>Aucune action retenue</h2>
+                        <p>Sélectionnez le statut "Retenu (Mandat)" sur une idée pour la faire apparaître ici.</p>
+                    </div>
+
+                    <div class="timeline">
+                        <div v-for="group in timelineMandat" :key="group.year" class="timeline-year">
+                            <h2 class="year-marker">{{ group.year }}</h2>
+                            <div class="timeline-cards-grid">
+                                <div v-for="action in group.actions" :key="action.id" class="action-card font-medium" :class="'theme-' + getAxisColorClass(action)">
+                                    <div class="card-badge">{{ getAxisForAction(action).title }}</div>
+                                    <h3>{{ action.title }}</h3>
+                                    <p class="text-sm text-gray" v-if="action.description">{{ action.description }}</p>
+                                    <div class="elu-tag mt-2">
+                                        <i data-lucide="user"></i> {{ getEluName(action.referent_id) || 'Non assigné' }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Vue: Projet de Territoire (Chronogramme Long Terme) -->
+                <div v-if="currentView === 'projet_territoire'" class="view-timeline fade-in">
+                    <header class="view-header print-header">
+                        <h1>Le Projet de Territoire</h1>
+                        <p class="subtitle">Vision structurante et opérations à Horizon Long Terme.</p>
+                        <button class="btn-outline hide-print" @click="window.print()"><i data-lucide="printer"></i> Imprimer</button>
+                    </header>
+
+                    <div v-if="timelineTerritoire.length === 0" class="empty-state">
+                        <i data-lucide="map" class="giant-icon"></i>
+                        <h2>Aucun projet à long terme</h2>
+                        <p>Sélectionnez le statut "Horizon Long Terme" sur une idée pour la décliner comme Projets de Territoire.</p>
+                    </div>
+
+                    <div class="timeline">
+                        <div v-for="group in timelineTerritoire" :key="group.year" class="timeline-year">
+                            <h2 class="year-marker">{{ group.year }}</h2>
+                            <div class="timeline-cards-grid">
+                                <div v-for="action in group.actions" :key="action.id" class="action-card font-medium" :class="'theme-' + getAxisColorClass(action)">
+                                    <div class="card-badge">{{ getAxisForAction(action).title }}</div>
+                                    <h3>{{ action.title }}</h3>
+                                    <p class="text-sm text-gray" v-if="action.description">{{ action.description }}</p>
+                                    <div class="elu-tag mt-2">
+                                        <i data-lucide="user"></i> {{ getEluName(action.referent_id) || 'Non assigné' }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Vue: Paramétrage -->
+                <div v-if="currentView === 'parametrage'" class="view-parametrage fade-in">
+                    <header class="view-header">
+                        <h1>Paramétrage Initiale</h1>
+                        <p class="subtitle">Pré-configurez l'architecture de base avant de démarrer le diagnostic</p>
+                    </header>
+
+                    <div class="form-group grid-2">
+                        <!-- Thèmes MAjeurs -->
+                        <div class="parametrage-card">
+                            <h3><i data-lucide="layers"></i> Axes / Thèmes Majeurs</h3>
+                            <p class="text-sm text-gray mb-4">Les grands chapitres du mandat (ex: Transition écologique, Citoyenneté...)</p>
+                            
+                            <ul class="config-list mb-4">
+                                <li v-for="axis in data.axes" :key="axis.id" class="config-item">
+                                    <span class="font-medium">{{ axis.title }}</span>
+                                    <button class="icon-btn text-red p-1" @click="removeAxis(axis.id)"><i data-lucide="trash-2"></i></button>
+                                </li>
+                            </ul>
+                            
+                            <div class="flex gap-2">
+                                <input type="text" v-model="newAxisTitle" placeholder="Nouveau titre d'axe" @keyup.enter="addAxis" class="flex-grow">
+                                <button class="btn-primary" @click="addAxis">Ajouter</button>
+                            </div>
+                        </div>
+
+                        <!-- Elus -->
+                        <div class="parametrage-card">
+                            <h3><i data-lucide="users"></i> Élus en charge (Adjoints/VP)</h3>
+                            <p class="text-sm text-gray mb-4">Les personnes responsables de porter les projets.</p>
+                            
+                            <ul class="config-list mb-4">
+                                <li v-for="elu in data.elus" :key="elu.id" class="config-item">
+                                    <div>
+                                        <div class="font-medium">{{ elu.name }}</div>
+                                        <div class="text-sm text-gray" v-if="elu.role">{{ elu.role }}</div>
+                                    </div>
+                                    <button class="icon-btn text-red p-1" @click="removeElu(elu.id)"><i data-lucide="trash-2"></i></button>
+                                </li>
+                            </ul>
+                            
+                            <div class="flex flex-col gap-2">
+                                <input type="text" v-model="newEluName" placeholder="Nom de l'élu" class="w-full">
+                                <input type="text" v-model="newEluRole" placeholder="Rôle/Titre (ex: VP Mobilité)" class="w-full" @keyup.enter="addElu">
+                                <button class="btn-primary mt-2" @click="addElu">Ajouter Élu</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- Modal Saisie -->
+        <div v-if="isModalOpen" class="modal-overlay fade-in" @click.self="closeModal">
+            <div class="modal-content slide-up">
+                <div class="modal-header">
+                    <h2>{{ editingAction ? 'Modifier l\'Idée / Fiche' : 'Nouvelle Idée (Diagnostic)' }}</h2>
+                    <button class="icon-btn" @click="closeModal"><i data-lucide="x"></i></button>
+                </div>
+                
+                <form @submit.prevent="saveAction" class="modal-form">
+                    <!-- Section Hierarchy -->
+                    <div class="form-group">
+                        <label>Axe Stratégique (Thème) <span class="text-red">*</span></label>
+                        <select v-model="form.axis_id" required class="large-input">
+                            <option value="" disabled>-- Sélectionner --</option>
+                            <option v-for="a in data.axes" :value="a.id">{{ a.title }}</option>
+                        </select>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <!-- Section Action -->
+                    <div class="form-group">
+                        <label>Titre de l'idée / fiche <span class="text-red">*</span></label>
+                        <input type="text" v-model="form.title" required class="large-input" placeholder="Que va-t-on faire concrètement ?">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Diagnostic (Description, besoins)</label>
+                        <textarea v-model="form.description" rows="3" placeholder="État des lieux, besoins exprimés, opportunités..."></textarea>
+                    </div>
+
+                    <div class="form-group grid-3">
+                        <div>
+                            <label>Élu Référent (Soutenu par)</label>
+                            <select v-model="form.referent_id">
+                                <option value="">Non assigné</option>
+                                <option v-for="elu in data.elus" :value="elu.id">{{ elu.name }} ({{elu.role}})</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Année Cible (Horizon)</label>
+                            <select v-model="form.target_year">
+                                <option value="">Moyen / Long Terme indéfini</option>
+                                <!-- Generates 2024 to 2050 -->
+                                <option v-for="year in Array.from({length: 27}, (_, i) => 2024 + i)" :value="year">{{year}}</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Statut</label>
+                            <select v-model="form.status" :class="form.status" class="status-select w-full mt-1 border-gray">
+                                <option value="reflexion" class="reflexion">En réflexion</option>
+                                <option value="retenu" class="retenu">Retenu (Mandat)</option>
+                                <option value="long_terme" class="long_terme">Horizon Long Terme</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer mt-6">
+                        <button type="button" class="btn-outline" @click="closeModal">Annuler</button>
+                        <button type="submit" class="btn-primary">Enregistrer la fiche</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
