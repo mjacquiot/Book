@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>EluConnect</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="description" content="Plateforme moderne de gestion pour les élus communaux et techniciens.">
+    <link rel="apple-touch-icon" href="icon-512.png">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    
+    <!-- FullCalendar v6 (Agenda) -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+</head>
+<body>
+    <!-- App Container -->
+    <div id="app" class="app-container">
+        <!-- Vues gérées dynamiquement par app.js -->
+        <div id="loader" class="loader-view">
+            <div class="spinner"></div>
+            <p>Chargement d'EluConnect...</p>
+        </div>
+    </div>
+
+    <!-- Supabase JS Client Mock (Local & Offline) -->
+    <script src="js/supabase-mock.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <script type="module">
+        import { fakerFR as faker } from 'https://esm.sh/@faker-js/faker';
+        window.faker = faker;
+    </script>
+    <script src="js/crypto_utils.js"></script>
+    <script src="js/state.js"></script>
+    <script src="js/views_app.js"></script>
+    <script src="js/actions/crypto_init.js"></script>
+    <script src="js/actions/auth_actions.js"></script>
+    <script src="js/actions/theme_actions.js"></script>
+    <script src="js/actions/doc_actions.js"></script>
+    <script src="js/actions/rag_actions.js"></script>
+    <script src="js/actions/agenda_actions.js"></script>
+    <script src="js/actions/sys_actions.js"></script>
+    <script src="js/init.js"></script>
+    <!-- Désinstallation forcée de l'ancien Service Worker pour empêcher le blocage du cache -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for(let registration of registrations) {
+                    registration.unregister();
+                    console.log("Service Worker désinstallé (vide le cache) !");
+                }
+            });
+        }
+    </script>
+</body>
+</html>

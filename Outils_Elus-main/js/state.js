@@ -1,0 +1,349 @@
+/**
+ * EluConnect - Plateforme Élus & Techniciens
+ * Version Finale (Abonnements, Votes, Droits, Tesseract, Supabase)
+ */
+
+// --- DEBUG TRACER ---
+console.log("=== APP.JS STARTING ===");
+
+// --- CONFIG SUPABASE ---
+const supabaseUrl = 'https://cwppjhzjpbucyiwtncmt.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3cHBqaHpqcGJ1Y3lpd3RuY210Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2MTQ5NDQsImV4cCI6MjA5MDE5MDk0NH0.pe-JWUtpPs_sfI1OUrej7m3Fu2Km3QzB1Rh8qmHhd5w';
+let supabaseClient;
+try {
+  supabaseClient = window.supabase ? window.supabase.createClient(supabaseUrl, supabaseKey, { auth: { persistSession: false } }) : null;
+} catch (e) {
+  console.error("Supabase init error:", e);
+}
+
+const ROLES = { SUPERADMIN: 'superadmin', ADMIN: 'admin', MAIRE: 'maire', ADJOINT: 'adjoint', DELEGUE: 'delegue', TECHNICIEN: 'technicien', ELU: 'elu', DEMO: 'demo' };
+const MONTH_NAMES = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"];
+const APP_DATE = new Date("2026-03-23T16:00:00");
+
+// --- SANITIZE HTML (XSS PROTECTION) ---
+const sanitizeHTML = (str) => {
+  if (typeof str !== 'string') return str;
+  return str.replace(/[&<>'"]/g, tag => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    "'": '&#39;',
+    '"': '&quot;'
+  }[tag] || tag)
+  );
+};
+
+// --- STATE ---
+let state = {
+  user: null, // {id, username, email, role, collectivite_id, attachedThemes: []}
+  currentView: 'login',
+  activeThemeId: null,
+  activeSubjectId: null,
+  activeDocId: null,
+  expandedCouncilId: null,
+  publicVotedStatus: {},
+  supabaseUrl: supabaseUrl,
+
+  themes: [],
+  subjects: [],
+  councils: [],
+  messages: [],
+  gantt: {},
+  historyLogs: [],
+  users: [],
+
+  tempRagDocs: [],
+  aiChat: [],
+  aiChatViewMode: 'clear',
+  aiChatMode: 'manuel',
+  uiFilterUsers: null,
+  pendingRegistrations: [],
+  localDict: {},          // Dictionnaire de pseudonymisation local
+  aiWorker: null,         // Référence au Web Worker Transformers.js
+  aiModelStatus: 'idle',  // 'idle' | 'loading' | 'ready' | 'error'
+  aiModelProgress: 0,     // 0-100
+  apiConfig: {
+    active: localStorage.getItem('rag_api_active') || 'none',
+    keys: {
+      free: localStorage.getItem('rag_api_free') || '',
+      mamouth: localStorage.getItem('rag_api_mamouth') || '',
+      pro: localStorage.getItem('rag_api_pro') || ''
+    }
+  },
+  customPermissions: {},
+  customRolesList: []
+};
+
+// --- INITIALIZATION & SYNC ---
+async function syncFromSupabase() {
+  if (!supabaseClient) return;
+  try {
+    // 1. Mise à jour du profil de l'utilisateur courant pour obtenir sa collectivité
+    if (state.user && state.user.id) {
+      const { data: pData, error: pErr } = await supabaseClient.from('profiles').select('*').eq('id', state.user.id).single();
+      if (pErr) console.error("Erreur critique sur la lecture du Profil RLS:", pErr);
+      if (pData) {
+        state.user.role = pData.role;
+        if (state.user.role !== ROLES.SUPERADMIN) {
+           state.user.collectivite_id = pData.collectivite_id || null;
+        }
+        state.user.username = pData.username;
+        state.user.attachedThemes = pData.attached_themes || [];
+        state.user.demo_expires_at = pData.demo_expires_at || null;
+        state.user.personal_context = pData.personal_context || '';
+        state.user.rag_whitelist = pData.rag_whitelist || '';
+        state.user.onboarding_done = pData.onboarding_done || false;
+      }
+    }
+
+    // Détermination de la collectivité ciblée (pour SuperAdmin il voit tout en global tout le temps)
+    let targetCol = state.user ? state.user.collectivite_id : null;
+    if (state.user && state.user.role === ROLES.SUPERADMIN) {
+        targetCol = null;
+    }
+
+    // 2. Construction des requêtes avec filtrage de cloisonnement (Multi-Tenancy)
+    let queryThemes = supabaseClient.from('themes').select('*').eq('is_archived', false);
+    let querySubjects = supabaseClient.from('subjects').select('*');
+    let queryCouncils = supabaseClient.from('councils').select('*');
+    let queryMessages = supabaseClient.from('messages').select('*');
+    let queryDocuments = supabaseClient.from('documents').select('*');
+    let queryProfiles = supabaseClient.from('profiles').select('*');
+
+    // Le SUPERADMIN n'a pas de filtre global si targetCol est null.
+    if (targetCol) {
+      queryThemes = queryThemes.eq('collectivite_id', targetCol);
+      querySubjects = querySubjects.eq('collectivite_id', targetCol);
+      queryCouncils = queryCouncils.eq('collectivite_id', targetCol);
+      queryProfiles = queryProfiles.eq('collectivite_id', targetCol);
+    } else if (state.user && state.user.role !== ROLES.SUPERADMIN) {
+      // FAILLE SECURITE FIX : Si un utilisateur n'a pas de collectivité et n'est pas SuperAdmin, 
+      // il ne doit RIEN voir, pas tout voir !
+      queryThemes = queryThemes.eq('collectivite_id', 'BLOCKED');
+      querySubjects = querySubjects.eq('collectivite_id', 'BLOCKED');
+      queryCouncils = queryCouncils.eq('collectivite_id', 'BLOCKED');
+      queryProfiles = queryProfiles.eq('collectivite_id', 'BLOCKED');
+    }
+
+    const [
+      { data: profiles },
+      { data: themes },
+      { data: subjects },
+      { data: councils },
+      { data: messages },
+      { data: documents }
+    ] = await Promise.all([
+      queryProfiles, queryThemes, querySubjects, queryCouncils, queryMessages, queryDocuments
+    ]);
+
+    state.users = profiles || [];
+    state.themes = await Promise.all((themes || []).map(async t => {
+        let decTitle = t.title;
+        let decDesc = t.description;
+        if (t.iv) {
+            if (window.sessionCollectivityKey) {
+                try {
+                    const ivs = JSON.parse(t.iv);
+                    decTitle = (await window.CryptoManager.decryptDictionaryEntry(t.title, ivs.title_iv, window.sessionCollectivityKey)).text;
+                    decDesc = (await window.CryptoManager.decryptDictionaryEntry(t.description, ivs.desc_iv, window.sessionCollectivityKey)).text;
+                } catch(e) { 
+                    console.warn("Failed decrypting theme", t.id);
+                    decTitle = "🔒 Erreur de déchiffrement";
+                    decDesc = "";
+                }
+            } else {
+                decTitle = "🔒 Contenu chiffré";
+                decDesc = "";
+            }
+        }
+        return { id: t.id, title: decTitle, desc: decDesc, isArchived: t.is_archived, collectivite_id: t.collectivite_id };
+    }));
+
+    const allSubjects = await Promise.all((subjects || []).map(async s => {
+        let decTitle = s.title;
+        let decDesc = s.description;
+        if (s.iv) {
+            if (window.sessionCollectivityKey) {
+                try {
+                    const ivs = JSON.parse(s.iv);
+                    decTitle = (await window.CryptoManager.decryptDictionaryEntry(s.title, ivs.title_iv, window.sessionCollectivityKey)).text;
+                    decDesc = (await window.CryptoManager.decryptDictionaryEntry(s.description, ivs.desc_iv, window.sessionCollectivityKey)).text;
+                } catch(e) { 
+                    console.warn("Failed decrypting subject", s.id);
+                    decTitle = "🔒 Erreur de déchiffrement";
+                    decDesc = "";
+                }
+            } else {
+                decTitle = "🔒 Contenu chiffré";
+                decDesc = "";
+            }
+        }
+        let parsedVote = s.vote;
+        if (typeof parsedVote === 'string') {
+            try { parsedVote = JSON.parse(parsedVote); } catch (e) { parsedVote = null; }
+        }
+        if (parsedVote) {
+            if (!parsedVote.counts) parsedVote.counts = new Array(parsedVote.options ? parsedVote.options.length : 2).fill(0);
+            if (!parsedVote.voters) parsedVote.voters = [];
+        }
+        return {
+          id: s.id, themeId: s.theme_id, title: decTitle, desc: decDesc, isConfidential: s.is_confidential,
+          councilDate: s.council_date, vote: parsedVote, docs: [], collectivite_id: s.collectivite_id, isArchived: s.is_archived || false
+        };
+    }));
+
+    // Filtrage des documents et messages orphelins (sécurité supplémentaire front-end)
+    const validSubjectIds = new Set(allSubjects.map(s => s.id));
+    const allDocs = await Promise.all((documents || []).filter(d => validSubjectIds.has(d.subject_id)).map(async d => {
+        let decTitle = d.title;
+        let decContent = d.content;
+        if (d.iv) {
+            if (window.sessionCollectivityKey) {
+                try {
+                    const ivs = JSON.parse(d.iv);
+                    decTitle = (await window.CryptoManager.decryptDictionaryEntry(d.title, ivs.title_iv, window.sessionCollectivityKey)).text;
+                    if (d.content && ivs.content_iv) decContent = (await window.CryptoManager.decryptDictionaryEntry(d.content, ivs.content_iv, window.sessionCollectivityKey)).text;
+                } catch(e) { 
+                    console.warn("Failed decrypting document", d.id);
+                    decTitle = "🔒 Erreur de déchiffrement";
+                    decContent = "🔒 Contenu chiffré ou erreur de clé.";
+                }
+            } else {
+                decTitle = "🔒 Contenu chiffré";
+                decContent = "🔒 Contenu chiffré.";
+            }
+        }
+        return {
+          id: d.id, subject_id: d.subject_id, title: decTitle, content: decContent, fileUrl: d.file_url
+        };
+    }));
+
+    allSubjects.forEach(s => { s.docs = allDocs.filter(d => d.subject_id === s.id); });
+    state.subjects = allSubjects;
+
+    state.councils = (councils || []).map(c => ({ id: c.id, date: c.date_seance, agenda: c.agenda || [], collectivite_id: c.collectivite_id }));
+    state.messages = (messages || []).map(m => ({ id: m.id, type: m.type, targetId: m.target_id, sender: m.sender, text: m.text }));
+
+    // 3. Récupération de la configuration RBAC (SuperAdmin récupère par defaut null s'il na pas de cible ou récupère le bon lors de l'override local)
+    if (targetCol) {
+       const { data: rbacData } = await supabaseClient.from('collectivity_roles_config').select('permissions, custom_roles').eq('collectivite_id', targetCol).maybeSingle();
+       if (rbacData) {
+           state.customPermissions = rbacData.permissions || {};
+           state.customRolesList = rbacData.custom_roles || [];
+       } else {
+           state.customPermissions = {};
+           state.customRolesList = [];
+       }
+    } else {
+       state.customPermissions = {};
+       state.customRolesList = [];
+    }
+
+  } catch (err) {
+    console.error("Erreur de synchro Supabase:", err);
+  }
+
+  // Charger les pré-autorisations en attente (pour les admins)
+  if (state.user && Permissions.canManageUsers(state.user)) {
+    try { await window.loadPendingRegistrations(); } catch(e) { /* table peut ne pas exister encore */ }
+  }
+}
+
+// L'historique devient temporaire/client-side pour l'instant
+function logHistory(themeId, action, description) {
+  state.historyLogs.push({
+    id: Date.now(),
+    themeId,
+    action,
+    description,
+    user: state.user ? state.user.username : 'Système',
+    date: new Date().toISOString()
+  });
+}
+
+// --- PERMISSIONS ---
+// --- PERMISSIONS (RBAC Dynamique) ---
+const Permissions = {
+  isPublic: () => !state.user,
+
+  // Fonction utilitaire pour lire la matrice dynamique :
+  // Retourne la règle personnalisée OU la règle par défaut si non spécifié.
+  _check: (capability, u, fallback) => {
+      // Les Admins et SuperAdmins conservent toujours les droits par précaution s'il s'agit d'une fonction d'admin
+      if (u.role === ROLES.SUPERADMIN) return true;
+      if ((u.role === ROLES.ADMIN || u.role === ROLES.DEMO) && capability === 'manage_users') return true; 
+
+      if (state.customPermissions && state.customPermissions[u.role] && typeof state.customPermissions[u.role][capability] === 'boolean') {
+          return state.customPermissions[u.role][capability];
+      }
+      return fallback;
+  },
+
+  canManageTheme: (t, u) => {
+    if (!u) return false;
+    // Si la config globale l'autorise (ou fallback)
+    const globalGranted = Permissions._check('manage_themes', u, [ROLES.ADMIN, ROLES.DEMO, ROLES.MAIRE].includes(u.role));
+    if (globalGranted) return true;
+    // Sinon, on accorde si le thème est spécifiquement rattaché (override positif local uniquement)
+    return u.attachedThemes && u.attachedThemes.includes(t.id);
+  },
+
+  canManageSubject: (s, u) => {
+    if (!u) return false;
+    const globalGranted = Permissions._check('manage_subjects', u, [ROLES.ADMIN, ROLES.DEMO, ROLES.MAIRE].includes(u.role));
+    if (globalGranted) return true;
+    return u.attachedThemes && u.attachedThemes.includes(s.themeId);
+  },
+
+  canSeeSubject: (s, u) => {
+    if (!u) return false;
+    if (s.isConfidential) {
+        return Permissions._check('see_confidential', u, u.role !== ROLES.TECHNICIEN);
+    }
+    return true; // Tous le monde voit les non-confidentiels de base
+  },
+
+  canVote: (s, u) => {
+    if (!u) return false;
+    if (s.vote && s.vote.target === 'elu') {
+       return Permissions._check('vote_active', u, u.role !== ROLES.TECHNICIEN);
+    }
+    return false;
+  },
+
+  canManageUsers: (u) => {
+    if (!u) return false;
+    return Permissions._check('manage_users', u, [ROLES.ADMIN, ROLES.DEMO, ROLES.MAIRE].includes(u.role));
+  },
+
+  canAttachThemes: (u) => {
+    if (!u) return false;
+    return Permissions._check('manage_users', u, [ROLES.ADMIN, ROLES.DEMO, ROLES.MAIRE].includes(u.role));
+  },
+
+  canReadCalendar: (u) => {
+    if (!u) return false;
+    return Permissions._check('read_calendar', u, true);
+  },
+
+  canRsvpCalendar: (u) => {
+    if (!u) return false;
+    return Permissions._check('rsvp_calendar', u, u.role !== ROLES.TECHNICIEN);
+  },
+
+  canEditCalendar: (u) => {
+    if (!u) return false;
+    return Permissions._check('edit_calendar', u, [ROLES.ADMIN, ROLES.DEMO, ROLES.MAIRE, ROLES.ADJOINT].includes(u.role));
+  },
+
+  canAccessScraping: (u) => {
+    if (!u) return false;
+    return Permissions._check('access_scraping', u, [ROLES.ADMIN, ROLES.DEMO, ROLES.MAIRE, ROLES.ADJOINT, ROLES.TECHNICIEN].includes(u.role));
+  },
+
+  canAccessRag: (u) => {
+    if (!u) return false;
+    return Permissions._check('access_rag', u, [ROLES.ADMIN, ROLES.DEMO, ROLES.MAIRE, ROLES.ADJOINT, ROLES.TECHNICIEN].includes(u.role));
+  }
+};
+

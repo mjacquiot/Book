@@ -1,0 +1,1397 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MAM Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: #f8fafc;
+        }
+
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .save-flash {
+            animation: flash 1s ease-out;
+        }
+
+        @keyframes flash {
+            0% {
+                color: #10b981;
+            }
+
+            100% {
+                color: #9ca3af;
+            }
+        }
+
+        .annual-grid {
+            display: grid;
+            grid-template-columns: 60px repeat(31, minmax(20px, 1fr));
+            gap: 2px;
+        }
+
+        .annual-cell {
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 800;
+            border-radius: 2px;
+            color: #1e293b;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.2s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo, useRef } = React;
+
+        // --- SECURITE AVANCEE (COFFRE-FORT) ---
+
+        // 1. La "Graine" secrète (Seed). C'est la base de calcul des mots de passe.
+        const SECRET_SEED = "MAJA";
+        const ADMIN_PASSWORD = "MAJA00"; // Mot de passe pour voir la liste des codes futurs
+
+        // 2. Fonction de hachage simple (pour ne pas stocker les mots de passe en clair)
+        const generateYearlyCode = (year) => {
+            // Algorithme de génération pseudo-aléatoire déterministe basé sur l'année et la graine
+            let h = 0x811c9dc5;
+            const str = SECRET_SEED + year + "SALT_V2"; // Ajout de sel pour robustesse
+            for (let i = 0; i < str.length; i++) {
+                h ^= str.charCodeAt(i);
+                h = Math.imul(h, 0x01000193);
+            }
+            // Conversion en base 36 (alphanumérique) et prise des 6 derniers caractères en majuscule
+            const code = ("000000" + (h >>> 0).toString(36).toUpperCase()).slice(-6);
+            return code; // Retourne un code type "K9X2M4" unique pour l'année
+        };
+
+        // Vérifie le mot de passe et retourne l'année validée si correct
+        const checkDynamicPassword = (input) => {
+            const currentYear = new Date().getFullYear();
+            // On accepte le code de l'année en cours OU celui de l'année prochaine
+            if (input === generateYearlyCode(currentYear)) return currentYear;
+            if (input === generateYearlyCode(currentYear + 1)) return currentYear + 1;
+            return null;
+        };
+
+        // --- UTILITAIRES ---
+        const getWeekNumber = (d) => {
+            const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+            date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
+            const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+            return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+        };
+
+        const getDatesOfWeek = (dateStr) => {
+            const d = dateStr ? new Date(dateStr) : new Date();
+            const day = d.getDay();
+            const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+            const monday = new Date(d);
+            monday.setDate(diff);
+            const dates = [];
+            for (let i = 0; i < 5; i++) {
+                const nextDate = new Date(monday);
+                nextDate.setDate(monday.getDate() + i);
+                dates.push(nextDate.toISOString().split('T')[0]);
+            }
+            return dates;
+        };
+
+        const getHoursDiff = (start, end) => {
+            if (!start || !end) return 0;
+            const [sH, sM] = start.split(':').map(Number);
+            const [eH, eM] = end.split(':').map(Number);
+            return Math.max(0, (eH + eM / 60) - (sH + sM / 60));
+        };
+
+        const checkMealTime = (start, end) => {
+            if (!start || !end) return false;
+            return (start <= '12:00' && end >= '12:30');
+        };
+
+        const getAge = (birthDate) => {
+            if (!birthDate) return '?';
+            const today = new Date();
+            const birth = new Date(birthDate);
+            let months = (today.getFullYear() - birth.getFullYear()) * 12 + (today.getMonth() - birth.getMonth());
+            if (today.getDate() < birth.getDate()) months--;
+            const years = Math.floor(months / 12);
+            const remainingMonths = months % 12;
+            if (years > 0) return `${years}a ${remainingMonths}m`;
+            return `${months} mois`;
+        };
+
+        const JOURS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi'];
+        const MOIS = ['Janv', 'Févr', 'Mars', 'Avri', 'Mais', 'Juin', 'Juil', 'Août', 'Sept', 'Octo', 'Nove', 'Déce'];
+
+        // --- COMPOSANT LOGIN & ADMIN ---
+        const LoginScreen = ({ onLogin }) => {
+            const [inputCode, setInputCode] = useState('');
+            const [error, setError] = useState('');
+            const [showAdmin, setShowAdmin] = useState(false);
+            const [adminPwd, setAdminPwd] = useState('');
+            const [generatedList, setGeneratedList] = useState(null);
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                const validYear = checkDynamicPassword(inputCode);
+                if (validYear) {
+                    onLogin(validYear); // On passe l'année validée pour stockage
+                } else {
+                    setError("Code incorrect pour l'année en cours.");
+                }
+            };
+
+            const handleAdminUnlock = (e) => {
+                e.preventDefault();
+                if (adminPwd === ADMIN_PASSWORD) {
+                    const currentYear = new Date().getFullYear();
+                    const list = [];
+                    for (let i = 0; i < 50; i++) {
+                        list.push({ year: currentYear + i, code: generateYearlyCode(currentYear + i) });
+                    }
+                    setGeneratedList(list);
+                } else {
+                    alert("Code incorrect");
+                }
+            }
+
+            return (
+                <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4 relative">
+                    {!showAdmin ? (
+                        <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full border border-gray-200 relative">
+                            {/* ZONE SECRETE INVISIBLE (Haut Gauche du cadre blanc - 5x5 pixels) */}
+                            <div
+                                className="absolute top-0 left-0 w-[5px] h-[5px] z-50 cursor-default"
+                                onClick={() => setShowAdmin(true)}
+                                title="" // Pas d'infobulle
+                            ></div>
+
+                            <div className="text-center mb-8 relative">
+                                <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-blue-600 mb-2 select-none">
+                                    MAM Manager
+                                </h1>
+                                <div className="inline-block bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide">Espace Réservé</div>
+                            </div>
+                            <form onSubmit={handleSubmit} className="space-y-6">
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">Code d'accès Annuel</label>
+                                    <input
+                                        type="password"
+                                        value={inputCode}
+                                        onChange={(e) => setInputCode(e.target.value.toUpperCase())}
+                                        className="w-full border-2 border-gray-300 p-4 rounded-xl focus:border-emerald-500 focus:ring-emerald-500 outline-none transition-all text-center text-lg font-bold tracking-widest uppercase"
+                                        placeholder="******"
+                                        autoFocus
+                                    />
+                                    <p className="text-xs text-gray-400 mt-2 text-center">Le code change chaque année.</p>
+                                </div>
+                                {error && <div className="p-3 bg-red-50 text-red-600 text-sm font-bold rounded-lg text-center border border-red-100 animate-pulse">{error}</div>}
+                                <button type="submit" className="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 text-white font-bold py-4 rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all">
+                                    Connexion
+                                </button>
+                            </form>
+                            <div className="mt-8 pt-6 border-t border-gray-100 text-center">
+                                <p className="text-xs text-gray-400">
+                                    Application sécurisée par clé temporelle.
+                                    <br />Accès réservé aux professionnels du réseau.
+                                </p>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="bg-white p-8 rounded-2xl shadow-xl max-w-lg w-full border border-gray-200">
+                            <div className="flex justify-between items-center mb-4">
+                                <h2 className="text-xl font-bold text-gray-800">🔐 Administration</h2>
+                                <button onClick={() => { setShowAdmin(false); setGeneratedList(null); setAdminPwd(''); }} className="text-gray-500 hover:text-gray-800">Fermer</button>
+                            </div>
+
+                            {!generatedList ? (
+                                <form onSubmit={handleAdminUnlock} className="space-y-4">
+                                    <input
+                                        type="password"
+                                        value={adminPwd}
+                                        onChange={(e) => setAdminPwd(e.target.value)}
+                                        className="w-full border p-2 rounded"
+                                        placeholder="" // Champ vide, pas d'indice
+                                    />
+                                    <button type="submit" className="w-full bg-gray-800 text-white font-bold py-2 rounded">Valider</button>
+                                </form>
+                            ) : (
+                                <div className="space-y-4">
+                                    <p className="text-sm text-green-600 font-bold">Liste des codes générés :</p>
+                                    <div className="h-64 overflow-y-auto border rounded bg-gray-50 p-2 font-mono text-sm">
+                                        <table className="w-full text-left">
+                                            <thead><tr><th className="p-1 border-b">Année</th><th className="p-1 border-b">Code d'accès</th></tr></thead>
+                                            <tbody>
+                                                {generatedList.map(item => (
+                                                    <tr key={item.year}>
+                                                        <td className="p-1 border-b text-gray-600">{item.year}</td>
+                                                        <td className="p-1 border-b font-bold text-blue-600 select-all">{item.code}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <button onClick={() => {
+                                        const text = generatedList.map(i => `${i.year}: ${i.code}`).join('\n');
+                                        const blob = new Blob([text], { type: 'text/plain' });
+                                        const url = URL.createObjectURL(blob);
+                                        const a = document.createElement('a');
+                                        a.href = url;
+                                        a.download = 'MAM_CODES_ACCES_MAJA.txt';
+                                        a.click();
+                                    }} className="w-full bg-blue-600 text-white font-bold py-2 rounded hover:bg-blue-700">
+                                        📥 Télécharger la liste (.txt)
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        // --- COMPOSANTS DES ONGLETS ---
+
+        const DashboardTab = ({ ams, kids, contracts, handleExport, handleImport }) => (
+            <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                    <h2 className="text-2xl font-bold text-gray-800">Vue d'ensemble</h2>
+                    <button onClick={() => window.print()} className="bg-gray-100 hover:bg-gray-200 p-2 rounded shadow-sm" title="Imprimer">🖨️ Imprimer</button>
+                </div>
+
+                <div className="bg-orange-50 border-l-4 border-orange-500 p-4 rounded-r-xl shadow-sm">
+                    <div className="flex items-start">
+                        <div className="flex-shrink-0"><span className="text-orange-500 text-xl">⚠️</span></div>
+                        <div className="ml-3">
+                            <h3 className="text-sm font-bold text-orange-800">Sécurité de vos données</h3>
+                            <div className="mt-2 text-sm text-orange-700">
+                                <p>L'application sauvegarde tout automatiquement dans votre navigateur. <b>Pensez à télécharger une sauvegarde régulièrement</b> (une fois par semaine).</p>
+                            </div>
+                            <div className="mt-4 flex space-x-3">
+                                <button onClick={handleExport} className="bg-orange-600 text-white px-4 py-2 rounded shadow hover:bg-orange-700 font-bold text-sm">
+                                    💾 TÉLÉCHARGER SAUVEGARDE
+                                </button>
+                                <label className="bg-white text-orange-700 border border-orange-300 px-4 py-2 rounded shadow hover:bg-orange-50 cursor-pointer font-bold text-sm">
+                                    📂 RESTAURER
+                                    <input type="file" className="hidden" accept=".json" onChange={handleImport} />
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <h3 className="text-gray-500 text-sm font-semibold uppercase">Équipe</h3>
+                        <p className="text-4xl font-bold text-blue-600 mt-2">{ams.length} <span className="text-lg text-gray-400">AMs</span></p>
+                    </div>
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <h3 className="text-gray-500 text-sm font-semibold uppercase">Enfants Inscrits</h3>
+                        <p className="text-4xl font-bold text-emerald-600 mt-2">{kids.length}</p>
+                    </div>
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <h3 className="text-gray-500 text-sm font-semibold uppercase">Contrats Actifs</h3>
+                        <p className="text-4xl font-bold text-purple-600 mt-2">{contracts.length}</p>
+                    </div>
+                </div>
+            </div>
+        );
+
+        const ConfigTab = ({ ams, setAms, kids, setKids }) => {
+            const [newAm, setNewAm] = useState({ name: '', capacity: 4, hourlyRate: 4.00, maintenanceFee: 3.50, mealFee: 4.00 });
+            const [newKid, setNewKid] = useState({ name: '', amId: '', birthDate: '', medical: '' });
+
+            return (
+                <div className="space-y-8">
+                    {/* Section AM */}
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-xl font-bold text-gray-800">👩‍🍼 Assistantes Maternelles & Tarifs</h2>
+                            <button onClick={() => window.print()} className="bg-gray-100 hover:bg-gray-200 p-2 rounded shadow-sm text-sm" title="Imprimer">🖨️ Imprimer</button>
+                        </div>
+                        <div className="grid grid-cols-6 gap-4 mb-6 items-end">
+                            <div className="col-span-2"><label className="text-xs text-gray-500">Prénom</label><input type="text" className="border p-2 rounded w-full" value={newAm.name} onChange={e => setNewAm({ ...newAm, name: e.target.value })} /></div>
+                            <div><label className="text-xs text-gray-500">Capacité</label><input type="number" className="border p-2 rounded w-full" value={newAm.capacity} onChange={e => setNewAm({ ...newAm, capacity: parseInt(e.target.value) })} /></div>
+                            <div><label className="text-xs text-gray-500">Taux H. (€)</label><input type="number" step="0.1" className="border p-2 rounded w-full" value={newAm.hourlyRate} onChange={e => setNewAm({ ...newAm, hourlyRate: parseFloat(e.target.value) })} /></div>
+                            <div><label className="text-xs text-gray-500">IE (€)</label><input type="number" step="0.1" className="border p-2 rounded w-full" value={newAm.maintenanceFee} onChange={e => setNewAm({ ...newAm, maintenanceFee: parseFloat(e.target.value) })} /></div>
+                            <div><label className="text-xs text-gray-500">Repas (€)</label><div className="flex gap-2"><input type="number" step="0.1" className="border p-2 rounded w-full" value={newAm.mealFee} onChange={e => setNewAm({ ...newAm, mealFee: parseFloat(e.target.value) })} /><button className="bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-700" onClick={() => { if (newAm.name) { setAms([...ams, { ...newAm, id: Date.now() }]); setNewAm({ name: '', capacity: 4, hourlyRate: 4, maintenanceFee: 3.5, mealFee: 4 }); } }}>+</button></div></div>
+                        </div>
+                        <table className="w-full text-left border-collapse text-sm">
+                            <thead><tr className="bg-gray-50 border-b"><th className="p-2">Nom</th><th className="p-2">Capacité</th><th className="p-2">Taux H.</th><th className="p-2">IE</th><th className="p-2">Repas</th><th className="p-2">Action</th></tr></thead>
+                            <tbody>
+                                {ams.map(am => (
+                                    <tr key={am.id} className="border-b">
+                                        <td className="p-2 font-medium">{am.name}</td><td className="p-2">{am.capacity} pl.</td>
+                                        <td className="p-2">{am.hourlyRate} €</td><td className="p-2">{am.maintenanceFee} €</td><td className="p-2">{am.mealFee} €</td>
+                                        <td className="p-2"><button onClick={() => setAms(ams.filter(a => a.id !== am.id))} className="text-red-500 hover:bg-red-50 px-2 rounded">Supprimer</button></td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* Section Enfants */}
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <h2 className="text-xl font-bold text-gray-800 mb-4">🧸 Enfants Inscrits</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                            <div><label className="text-xs text-gray-500">Prénom</label><input type="text" className="border p-2 rounded w-full" value={newKid.name} onChange={e => setNewKid({ ...newKid, name: e.target.value })} /></div>
+                            <div><label className="text-xs text-gray-500">Naissance</label><input type="date" className="border p-2 rounded w-full" value={newKid.birthDate} onChange={e => setNewKid({ ...newKid, birthDate: e.target.value })} /></div>
+                            <div><label className="text-xs text-gray-500">AM Référente</label><select className="border p-2 rounded w-full" value={newKid.amId} onChange={e => setNewKid({ ...newKid, amId: parseInt(e.target.value) })}>
+                                <option value="">-- Choisir --</option>
+                                {ams.map(am => <option key={am.id} value={am.id}>{am.name}</option>)}
+                            </select></div>
+                            <div><label className="text-xs text-gray-500">Infos Médicales / PAI</label><input type="text" placeholder="Allergies, traitement..." className="border p-2 rounded w-full" value={newKid.medical} onChange={e => setNewKid({ ...newKid, medical: e.target.value })} /></div>
+                        </div>
+                        <div className="flex justify-end mb-6">
+                            <button className="bg-emerald-600 text-white px-6 py-2 rounded hover:bg-emerald-700" onClick={() => { if (newKid.name && newKid.amId) { setKids([...kids, { ...newKid, id: Date.now() }]); setNewKid({ name: '', amId: '', birthDate: '', medical: '' }); } }}>Ajouter l'enfant</button>
+                        </div>
+                        <table className="w-full text-left border-collapse text-sm">
+                            <thead><tr className="bg-gray-50 border-b"><th className="p-2">Prénom</th><th className="p-2">Age</th><th className="p-2">AM</th><th className="p-2">Infos Médicales</th><th className="p-2">Action</th></tr></thead>
+                            <tbody>
+                                {kids.map(kid => (
+                                    <tr key={kid.id} className="border-b">
+                                        <td className="p-2 font-medium">{kid.name}</td>
+                                        <td className="p-2">{getAge(kid.birthDate)}</td>
+                                        <td className="p-2 text-gray-600">{ams.find(a => a.id === kid.amId)?.name || '?'}</td>
+                                        <td className="p-2 text-xs text-gray-500 italic truncate max-w-[150px]">{kid.medical || '-'}</td>
+                                        <td className="p-2"><button onClick={() => setKids(kids.filter(k => k.id !== kid.id))} className="text-red-500 hover:bg-red-50 px-2 rounded">X</button></td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            );
+        };
+
+        const ContractsTab = ({ ams, kids, contracts, setContracts }) => {
+            const [form, setForm] = useState({
+                id: null, type: 'KID', targetId: '', startDate: new Date().toISOString().split('T')[0], endDate: new Date().toISOString().split('T')[0], recurrence: 'all',
+                days: {
+                    1: { active: true, start: '08:00', end: '17:00' }, 2: { active: true, start: '08:00', end: '17:00' },
+                    3: { active: true, start: '08:00', end: '17:00' }, 4: { active: true, start: '08:00', end: '17:00' },
+                    5: { active: true, start: '08:00', end: '17:00' }
+                }
+            });
+
+            const handleDayChange = (day, field, val) => {
+                setForm({ ...form, days: { ...form.days, [day]: { ...form.days[day], [field]: val } } });
+            };
+
+            const saveContract = () => {
+                if (!form.targetId) return alert("Sélectionnez une personne !");
+                if (form.id) {
+                    setContracts(contracts.map(c => c.id === form.id ? { ...form, targetId: parseInt(form.targetId) } : c));
+                } else {
+                    setContracts([...contracts, { ...form, id: Date.now(), targetId: parseInt(form.targetId) }]);
+                }
+                alert("Contrat enregistré !");
+                setForm({ ...form, id: null });
+            };
+
+            return (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <h2 className="text-xl font-bold text-gray-800 mb-6">Contrat Théorique / Planning</h2>
+                        <div className="grid grid-cols-2 gap-4 mb-4">
+                            <div><label className="block text-sm text-gray-600 mb-1">Pour qui ?</label><select className="w-full border p-2 rounded" value={form.type} onChange={e => setForm({ ...form, type: e.target.value, targetId: '' })}><option value="KID">Enfant</option><option value="AM">Assistante</option></select></div>
+                            <div><label className="block text-sm text-gray-600 mb-1">Nom</label><select className="w-full border p-2 rounded" value={form.targetId} onChange={e => setForm({ ...form, targetId: e.target.value })}><option value="">-- Sélectionner --</option>{(form.type === 'AM' ? ams : kids).map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></div>
+                        </div>
+                        <div className="grid grid-cols-3 gap-4 mb-6">
+                            <div><label className="block text-sm text-gray-600 mb-1">Du</label><input type="date" className="w-full border p-2 rounded" value={form.startDate} onChange={e => setForm({ ...form, startDate: e.target.value })} /></div>
+                            <div><label className="block text-sm text-gray-600 mb-1">Au</label><input type="date" className="w-full border p-2 rounded" value={form.endDate} onChange={e => setForm({ ...form, endDate: e.target.value })} /></div>
+                            <div><label className="block text-sm text-gray-600 mb-1">Rythme</label><select className="w-full border p-2 rounded" value={form.recurrence} onChange={e => setForm({ ...form, recurrence: e.target.value })}><option value="all">Toutes</option><option value="even">Paires</option><option value="odd">Impaires</option></select></div>
+                        </div>
+                        <div className="space-y-2 mb-6">
+                            {[1, 2, 3, 4, 5].map(d => (
+                                <div key={d} className="flex items-center gap-4 bg-gray-50 p-2 rounded text-sm">
+                                    <input type="checkbox" checked={form.days[d].active} onChange={e => handleDayChange(d, 'active', e.target.checked)} className="w-4 h-4" />
+                                    <span className="w-20 font-medium">{JOURS[d - 1]}</span>
+                                    <input type="time" disabled={!form.days[d].active} value={form.days[d].start} onChange={e => handleDayChange(d, 'start', e.target.value)} className="border p-1 rounded" /> à
+                                    <input type="time" disabled={!form.days[d].active} value={form.days[d].end} onChange={e => handleDayChange(d, 'end', e.target.value)} className="border p-1 rounded" />
+                                </div>
+                            ))}
+                        </div>
+                        <button onClick={saveContract} className="w-full bg-blue-600 text-white font-bold py-2 rounded hover:bg-blue-700">{form.id ? "Modifier le contrat" : "Enregistrer"}</button>
+                        {form.id && <button onClick={() => setForm({ ...form, id: null })} className="w-full mt-2 bg-gray-200 text-gray-700 font-bold py-2 rounded hover:bg-gray-300">Annuler modification</button>}
+                    </div>
+
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 overflow-y-auto max-h-[700px]">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-xl font-bold text-gray-800">Contrats ({contracts.length})</h2>
+                            <button onClick={() => window.print()} className="bg-gray-100 hover:bg-gray-200 p-1.5 rounded shadow-sm text-sm">🖨️ Imprimer</button>
+                        </div>
+                        {contracts.map(c => {
+                            const target = c.type === 'AM' ? ams.find(a => a.id === c.targetId) : kids.find(k => k.id === c.targetId);
+                            return (
+                                <div key={c.id} className="mb-3 p-3 border rounded bg-gray-50 flex justify-between items-center text-sm cursor-pointer hover:bg-blue-50 transition-colors" onClick={() => setForm(c)}>
+                                    <div>
+                                        <span className={`px-2 py-1 font-bold rounded mr-2 ${c.type === 'AM' ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700'}`}>{c.type}</span>
+                                        <span className="font-bold">{target?.name || 'Inconnu'}</span>
+                                        <p className="text-gray-500 mt-1">Du {new Date(c.startDate).toLocaleDateString()} au {new Date(c.endDate).toLocaleDateString()}</p>
+                                    </div>
+                                    <button onClick={(e) => { e.stopPropagation(); setContracts(contracts.filter(x => x.id !== c.id)); }} className="text-red-500 hover:bg-red-100 px-3 py-2 rounded font-bold">X</button>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            );
+        };
+
+        const CompactTrackingTab = ({ ams, kids, dailyLogs, setDailyLogs, getExpectedSchedule }) => {
+            const [dateStr, setDateStr] = useState(new Date().toISOString().split('T')[0]);
+            const [infoKidId, setInfoKidId] = useState(null); // Pour le pop-up info
+
+            const getExpectedList = (type) => {
+                const list = type === 'AM' ? ams : kids;
+                return list.map(item => {
+                    const expected = getExpectedSchedule(item.id, type, dateStr);
+                    const log = dailyLogs.find(l => l.targetId === item.id && l.type === type && l.date === dateStr);
+                    return { item, expected, log };
+                });
+            };
+
+            const allExpectedKids = getExpectedList('KID');
+            const expectedKids = allExpectedKids.filter(d => d.expected || d.log);
+            const unexpectedKids = allExpectedKids.filter(d => !d.expected && !d.log);
+
+            const allExpectedAms = getExpectedList('AM');
+            const expectedAms = allExpectedAms.filter(d => d.expected || d.log);
+            const unexpectedAms = allExpectedAms.filter(d => !d.expected && !d.log);
+
+            const handleLogChange = (targetId, type, field, value) => {
+                const existingLogIndex = dailyLogs.findIndex(l => l.targetId === targetId && l.type === type && l.date === dateStr);
+                const expected = getExpectedSchedule(targetId, type, dateStr);
+
+                let newLogs = [...dailyLogs];
+                if (existingLogIndex >= 0) {
+                    newLogs[existingLogIndex] = { ...newLogs[existingLogIndex], [field]: value };
+                } else {
+                    newLogs.push({
+                        id: Date.now(), date: dateStr, targetId, type,
+                        arrival: expected?.start || '08:00', departure: expected?.end || '18:00', isAbsent: false, note: '',
+                        [field]: value
+                    });
+                }
+                setDailyLogs(newLogs);
+            };
+
+            const setTimeNow = (targetId, type, field) => {
+                const now = new Date();
+                const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+                handleLogChange(targetId, type, field, timeStr);
+            };
+
+            const renderCompactAM = (data) => {
+                const { item, expected, log } = data;
+                const isAbsent = log?.isAbsent || false; // Défaut présent
+                const arrival = log ? log.arrival : (expected?.start || '');
+                const departure = log ? log.departure : (expected?.end || '');
+
+                return (
+                    <div key={item.id} className={`flex items-center justify-between p-2 rounded border border-gray-200 shadow-sm w-full md:w-auto min-w-[280px] ${isAbsent ? 'bg-red-50 opacity-70' : 'bg-white'}`}>
+                        <div className="flex flex-col">
+                            <span className="font-bold text-sm text-gray-800">{item.name}</span>
+                            <label className="text-[10px] text-gray-600 flex items-center gap-1 cursor-pointer">
+                                <input type="checkbox" checked={!isAbsent} onChange={e => handleLogChange(item.id, 'AM', 'isAbsent', !e.target.checked)} /> Présent
+                            </label>
+                        </div>
+                        {!isAbsent && (
+                            <div className="flex gap-1 items-center">
+                                <input type="time" value={arrival} onChange={e => handleLogChange(item.id, 'AM', 'arrival', e.target.value)} className="border p-1 text-xs w-16 rounded" />
+                                <span className="text-gray-400">-</span>
+                                <input type="time" value={departure} onChange={e => handleLogChange(item.id, 'AM', 'departure', e.target.value)} className="border p-1 text-xs w-16 rounded" />
+                            </div>
+                        )}
+                    </div>
+                );
+            };
+
+            const renderCompactKid = (data) => {
+                const { item, expected, log } = data;
+                const isAbsent = log?.isAbsent || false;
+                const arrival = log ? log.arrival : (expected?.start || '');
+                const departure = log ? log.departure : (expected?.end || '');
+                const note = log?.note || '';
+                const repasMidi = log?.repasMidi !== undefined ? log.repasMidi : checkMealTime(arrival, departure);
+                const repasSoir = log?.repasSoir !== undefined ? log.repasSoir : false;
+
+                return (
+                    <div key={item.id} className={`relative p-2 rounded border shadow-sm flex flex-col gap-1 ${isAbsent ? 'bg-red-50 border-red-200' : 'bg-white border-gray-200'}`}>
+                        <div className="flex justify-between items-center border-b pb-1">
+                            <button onClick={() => setInfoKidId(infoKidId === item.id ? null : item.id)} className="font-bold text-sm truncate text-emerald-800 text-left hover:underline">
+                                {item.name} ℹ️
+                            </button>
+                            <input type="checkbox" checked={!isAbsent} onChange={e => handleLogChange(item.id, 'KID', 'isAbsent', !e.target.checked)} className="w-4 h-4 accent-emerald-600 cursor-pointer" title="Décocher pour marquer absent" />
+                        </div>
+
+                        {/* Pop-up Info */}
+                        {infoKidId === item.id && (
+                            <div className="absolute top-8 left-0 right-0 z-10 bg-yellow-50 border border-yellow-200 p-2 rounded shadow-lg text-xs text-gray-700 fade-in">
+                                <p><b>Age:</b> {getAge(item.birthDate)}</p>
+                                <p><b>Santé/PAI:</b> {item.medical || 'RAS'}</p>
+                                <button onClick={() => setInfoKidId(null)} className="mt-1 text-blue-600 underline w-full text-center">Fermer</button>
+                            </div>
+                        )}
+
+                        {!isAbsent ? (
+                            <>
+                                <div className="flex justify-between gap-1 mt-1 items-center">
+                                    <div className="flex flex-col gap-1 w-full">
+                                        <div className="flex gap-1">
+                                            <input type="time" value={arrival} onChange={e => handleLogChange(item.id, 'KID', 'arrival', e.target.value)} className="border p-1 text-xs w-full rounded bg-gray-50" />
+                                            <button onClick={() => setTimeNow(item.id, 'KID', 'arrival')} className="text-[10px] bg-gray-200 hover:bg-gray-300 rounded px-1">🕒</button>
+                                        </div>
+                                        <div className="flex gap-1">
+                                            <input type="time" value={departure} onChange={e => handleLogChange(item.id, 'KID', 'departure', e.target.value)} className="border p-1 text-xs w-full rounded bg-gray-50" />
+                                            <button onClick={() => setTimeNow(item.id, 'KID', 'departure')} className="text-[10px] bg-gray-200 hover:bg-gray-300 rounded px-1">🕒</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="flex gap-2 justify-between mt-1 items-center">
+                                    <div className="flex gap-1">
+                                        <button onClick={() => handleLogChange(item.id, 'KID', 'repasMidi', !repasMidi)} className={`text-[10px] px-1.5 py-0.5 rounded ${repasMidi ? 'bg-orange-500 text-white font-bold' : 'bg-orange-100 text-orange-800'}`}>Midi</button>
+                                        <button onClick={() => handleLogChange(item.id, 'KID', 'repasSoir', !repasSoir)} className={`text-[10px] px-1.5 py-0.5 rounded ${repasSoir ? 'bg-orange-500 text-white font-bold' : 'bg-orange-100 text-orange-800'}`}>Soir</button>
+                                    </div>
+                                    <input type="text" value={note} onChange={e => handleLogChange(item.id, 'KID', 'note', e.target.value)} placeholder="Observations..." className="border p-1 text-[10px] w-full rounded" />
+                                </div>
+                            </>
+                        ) : (
+                            <div className="text-center text-red-500 text-xs py-2 italic">Enfant absent</div>
+                        )}
+                    </div>
+                );
+            };
+
+            return (
+                <div className="space-y-4">
+                    <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                        <h2 className="text-xl font-bold text-gray-800">✅ Pointage Rapide</h2>
+                        <div className="flex items-center gap-4">
+                            <input type="date" value={dateStr} onChange={e => setDateStr(e.target.value)} className="border-2 border-emerald-300 p-2 rounded text-lg font-bold text-gray-700" />
+                            <button onClick={() => window.print()} className="bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded shadow-sm text-sm" title="Imprimer">🖨️ Imprimer</button>
+                        </div>
+                    </div>
+
+                    <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 shadow-sm">
+                        <h3 className="font-bold text-blue-800 mb-3 text-sm flex items-center gap-2">👩‍🍼 Équipe (Présence requise)</h3>
+                        <div className="flex flex-wrap gap-3">
+                            {expectedAms.length === 0 ? <span className="text-xs text-blue-600">Aucune AM prévue (Vérifiez les contrats).</span> : expectedAms.map(a => renderCompactAM(a))}
+                        </div>
+                        {unexpectedAms.length > 0 && (
+                            <div className="mt-3">
+                                <select className="text-xs p-1.5 border border-blue-200 rounded text-blue-700 bg-white" onChange={e => { if (e.target.value) handleLogChange(parseInt(e.target.value), 'AM', 'isAbsent', false); e.target.value = ''; }}>
+                                    <option value="">+ Ajouter une AM non prévue...</option>
+                                    {unexpectedAms.map(k => <option key={k.item.id} value={k.item.id}>{k.item.name}</option>)}
+                                </select>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-100 shadow-sm">
+                        <h3 className="font-bold text-emerald-800 mb-3 text-sm flex items-center gap-2">🧸 Enfants ({expectedKids.length} attendus)</h3>
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                            {expectedKids.length === 0 ? <span className="text-xs text-emerald-600">Aucun enfant prévu (Vérifiez les contrats).</span> : expectedKids.map(k => renderCompactKid(k))}
+                        </div>
+                        {unexpectedKids.length > 0 && (
+                            <div className="mt-3">
+                                <select className="text-xs p-1.5 border border-emerald-200 rounded text-emerald-700 bg-white" onChange={e => { if (e.target.value) handleLogChange(parseInt(e.target.value), 'KID', 'isAbsent', false); e.target.value = ''; }}>
+                                    <option value="">+ Ajouter un enfant non prévu...</option>
+                                    {unexpectedKids.map(k => <option key={k.item.id} value={k.item.id}>{k.item.name}</option>)}
+                                </select>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        const AnnualViewTab = ({ ams, kids, checkPresenceGlobal, checkPresenceExpectedOnly }) => {
+            const [year, setYear] = useState(new Date().getFullYear());
+            const [viewMode, setViewMode] = useState('global');
+
+            const annualData = useMemo(() => {
+                const monthsData = [];
+                for (let m = 0; m < 12; m++) {
+                    const daysInMonth = new Date(year, m + 1, 0).getDate();
+                    const days = [];
+                    for (let d = 1; d <= 31; d++) {
+                        if (d > daysInMonth) { days.push(null); continue; }
+
+                        const dateStr = `${year}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                        const dateObj = new Date(dateStr);
+                        const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
+
+                        if (viewMode === 'global') {
+                            let minAvail = null; // Initialisation à null pour détecter si on a vraiment des données
+                            let active = false;
+
+                            if (!isWeekend) {
+                                for (let h = 8; h <= 18; h++) {
+                                    let cap = 0; let booked = 0;
+                                    const amsPresent = ams.filter(am => checkPresenceGlobal(am.id, 'AM', dateStr, h));
+
+                                    if (amsPresent.length > 0) {
+                                        cap = amsPresent.reduce((sum, am) => sum + am.capacity, 0);
+                                    } else {
+                                        // FALLBACK CRUCIAL : Si aucune AM n'a de contrat, mais qu'il y a des enfants, on considère que TOUTES les AM sont là par défaut
+                                        const kidsPresent = kids.filter(k => checkPresenceGlobal(k.id, 'KID', dateStr, h));
+                                        if (kidsPresent.length > 0) {
+                                            cap = ams.reduce((sum, am) => sum + am.capacity, 0);
+                                        }
+                                    }
+
+                                    kids.forEach(k => { if (checkPresenceGlobal(k.id, 'KID', dateStr, h)) booked++; });
+
+                                    // CORRECTIF LOGIQUE "0 places":
+                                    // On ne met à jour minAvail que si l'heure est "active" (c'est-à-dire si la MAM est ouverte ou qu'il y a un enfant)
+                                    // On ignore les heures où cap=0 et booked=0 (fermeture) pour ne pas fausser le minAvail à 0
+                                    if (cap > 0 || booked > 0) {
+                                        active = true;
+                                        const avail = cap - booked;
+                                        if (minAvail === null || avail < minAvail) minAvail = avail;
+                                    }
+                                }
+                            }
+                            // Si jour ouvré mais aucune activité détectée, on considère dispo max par défaut pour ne pas afficher gris
+                            if (!isWeekend && !active) {
+                                // Optionnel : afficher vert quand même ? Pour l'instant on laisse gris (inactif)
+                            }
+
+                            days.push({ day: d, isWeekend, active, minAvail: minAvail === null ? 0 : minAvail, dateStr });
+                        } else {
+                            let isPresent = false;
+                            for (let h = 8; h <= 18; h++) {
+                                if (checkPresenceExpectedOnly(parseInt(viewMode), 'KID', dateStr, h)) { isPresent = true; break; }
+                            }
+                            days.push({ day: d, isWeekend, present: isPresent, dateStr });
+                        }
+                    }
+                    monthsData.push({ month: m, name: MOIS[m], days });
+                }
+                return monthsData;
+            }, [year, viewMode, ams, kids]);
+
+            return (
+                <div className="space-y-6">
+                    <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                        <h2 className="text-xl font-bold text-gray-800">📅 Vues Annuelles</h2>
+                        <div className="flex gap-4">
+                            <button onClick={() => window.print()} className="bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded shadow-sm text-sm" title="Imprimer">🖨️ Imprimer</button>
+                            <select value={year} onChange={e => setYear(parseInt(e.target.value))} className="border p-2 rounded font-bold bg-gray-50">
+                                {[year - 1, year, year + 1, year + 2].map(y => <option key={y} value={y}>{y}</option>)}
+                            </select>
+                            <select value={viewMode} onChange={e => setViewMode(e.target.value)} className="border p-2 rounded font-bold bg-blue-50 text-blue-800">
+                                <option value="global">🌍 Disponibilité Globale MAM</option>
+                                <optgroup label="Plannings Enfants">
+                                    {kids.map(k => <option key={k.id} value={k.id}>🧒 {k.name}</option>)}
+                                </optgroup>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 overflow-x-auto">
+                        <div className="min-w-[800px]">
+                            <div className="annual-grid mb-2">
+                                <div className="font-bold text-gray-400 text-xs flex items-center">Mois</div>
+                                {Array.from({ length: 31 }, (_, i) => <div key={i} className="font-bold text-gray-400 text-[10px] text-center">{i + 1}</div>)}
+                            </div>
+
+                            {annualData.map(mData => (
+                                <div key={mData.month} className="annual-grid mb-1">
+                                    <div className="font-bold text-gray-700 text-sm flex items-center pr-2">{mData.name}</div>
+                                    {mData.days.map((d, i) => {
+                                        if (!d) return <div key={i} className="annual-cell bg-transparent"></div>;
+                                        let bgColor = 'bg-gray-100';
+                                        let title = d.dateStr;
+                                        let content = '';
+
+                                        if (d.isWeekend) {
+                                            bgColor = 'bg-gray-200 opacity-50';
+                                        } else if (viewMode === 'global') {
+                                            if (d.active) {
+                                                content = d.minAvail; // Affiche le nombre !
+                                                if (d.minAvail < 0) bgColor = 'bg-red-500 text-white font-bold';
+                                                else if (d.minAvail === 0) bgColor = 'bg-orange-400 text-white font-bold';
+                                                else bgColor = 'bg-emerald-300 text-emerald-900 font-bold';
+                                                title = `${d.dateStr} - Places restantes: ${d.minAvail}`;
+                                            } else {
+                                                bgColor = 'bg-gray-50'; // Inactif
+                                            }
+                                        } else {
+                                            if (d.present) bgColor = 'bg-blue-500';
+                                        }
+
+                                        return <div key={i} className={`annual-cell ${bgColor} cursor-help hover:opacity-75 transition-opacity border border-white`} title={title}>{content}</div>
+                                    })}
+                                </div>
+                            ))}
+                        </div>
+                        <div className="mt-8 flex gap-6 text-sm text-gray-600 border-t pt-4">
+                            {viewMode === 'global' ? (
+                                <><div className="flex items-center gap-2"><div className="w-4 h-4 bg-emerald-300 rounded flex items-center justify-center text-[8px]">N</div> Places dispos</div><div className="flex items-center gap-2"><div className="w-4 h-4 bg-orange-400 rounded flex items-center justify-center text-[8px] text-white">0</div> Complet</div><div className="flex items-center gap-2"><div className="w-4 h-4 bg-red-500 rounded"></div> Surcharge</div></>
+                            ) : (<div className="flex items-center gap-2"><div className="w-4 h-4 bg-blue-500 rounded"></div> Enfant prévu</div>)}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const DelegationsTab = ({ ams, kids, getActualScheduleForDay }) => {
+            const [targetMonth, setTargetMonth] = useState(new Date().toISOString().slice(0, 7));
+
+            const [y, m] = targetMonth.split('-');
+            const daysInMonth = new Date(y, m, 0).getDate();
+
+            const delegationLogs = [];
+
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dateStr = `${y}-${m}-${d.toString().padStart(2, '0')}`;
+
+                kids.forEach(kid => {
+                    const sched = getActualScheduleForDay(kid.id, 'KID', dateStr);
+                    if (sched) {
+                        const referentAm = ams.find(a => a.id === kid.amId);
+                        if (referentAm) {
+                            const referentSched = getActualScheduleForDay(referentAm.id, 'AM', dateStr);
+                            let delegatedDetails = [];
+
+                            if (!referentSched) {
+                                delegatedDetails.push(`Complète (${sched.start} - ${sched.end})`);
+                            } else {
+                                if (parseInt(sched.start) < parseInt(referentSched.start)) {
+                                    delegatedDetails.push(`Matin (${sched.start} - ${referentSched.start})`);
+                                }
+                                if (parseInt(sched.end) > parseInt(referentSched.end)) {
+                                    delegatedDetails.push(`Soir (${referentSched.end} - ${sched.end})`);
+                                }
+                            }
+
+                            if (delegatedDetails.length > 0) {
+                                delegationLogs.push({
+                                    date: dateStr,
+                                    kidName: kid.name,
+                                    referentName: referentAm.name,
+                                    details: delegatedDetails.join(', ')
+                                });
+                            }
+                        }
+                    }
+                });
+            }
+
+            return (
+                <div className="space-y-6">
+                    <div className="flex items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                        <h2 className="text-xl font-bold text-gray-800">🤝 Registre des Délégations d'Accueil (PMI)</h2>
+                        <input type="month" value={targetMonth} onChange={e => setTargetMonth(e.target.value)} className="border p-2 rounded text-lg font-bold" />
+                    </div>
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        {delegationLogs.length > 0 ? (
+                            <table className="w-full text-left text-sm border-collapse">
+                                <thead>
+                                    <tr className="bg-gray-100 border-b">
+                                        <th className="p-3">Date</th>
+                                        <th className="p-3">Enfant</th>
+                                        <th className="p-3">AM Remplacée (Référente)</th>
+                                        <th className="p-3">Détail (Horaires délégués)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {delegationLogs.map((log, idx) => (
+                                        <tr key={idx} className="border-b hover:bg-gray-50">
+                                            <td className="p-3 font-medium">{new Date(log.date).toLocaleDateString()}</td>
+                                            <td className="p-3 font-bold text-indigo-700">{log.kidName}</td>
+                                            <td className="p-3">{log.referentName}</td>
+                                            <td className="p-3 text-red-600 text-xs font-bold">{log.details}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        ) : (
+                            <div className="p-8 text-center text-gray-500 italic border border-dashed rounded bg-gray-50">
+                                Aucune délégation d'accueil n'a été détectée pour ce mois.
+                            </div>
+                        )}
+                        <button onClick={() => window.print()} className="mt-6 bg-gray-800 text-white px-4 py-2 rounded font-bold hover:bg-gray-900 shadow">🖨️ Imprimer le Registre</button>
+                    </div>
+                </div>
+            );
+        };
+
+        const PlanningTab = ({ ams, kids, getActualScheduleForDay, getExpectedSchedule, dailyLogs, setDailyLogs }) => {
+            const [weekStart, setWeekStart] = useState(new Date().toISOString().split('T')[0]);
+
+            const changeWeek = (offset) => {
+                const d = new Date(weekStart);
+                d.setDate(d.getDate() + offset * 7);
+                setWeekStart(d.toISOString().split('T')[0]);
+            };
+
+            const dates = getDatesOfWeek(weekStart);
+            const [autoPlanOptions, setAutoPlanOptions] = useState({ show: false, start: weekStart, end: weekStart });
+
+            const handleInlineUpdate = (type, targetId, date, field, value) => {
+                let newLogs = [...dailyLogs];
+                const existingIndex = newLogs.findIndex(l => l.targetId === targetId && l.type === type && l.date === date);
+
+                if (existingIndex >= 0) {
+                    if (field === 'isAbsent') {
+                        newLogs[existingIndex].isAbsent = value;
+                    } else {
+                        newLogs[existingIndex][field] = value;
+                        newLogs[existingIndex].isAbsent = false;
+                    }
+                    newLogs[existingIndex].note = 'Modifié';
+                } else {
+                    const fallback = getActualScheduleForDay(targetId, type, date) || { start: '08:00', end: '18:00' };
+                    newLogs.push({
+                        id: Date.now() + Math.random(), date, targetId, type,
+                        arrival: field === 'arrival' ? value : fallback.start,
+                        departure: field === 'departure' ? value : fallback.end,
+                        isAbsent: field === 'isAbsent' ? value : false,
+                        note: 'Modifié'
+                    });
+                }
+                setDailyLogs(newLogs);
+            };
+
+            const generateAMSchedules = (mode) => {
+                const datesToPlan = [];
+                let curr = new Date(autoPlanOptions.start);
+                const endToPlan = new Date(autoPlanOptions.end);
+                while (curr <= endToPlan) {
+                    datesToPlan.push(curr.toISOString().split('T')[0]);
+                    curr.setDate(curr.getDate() + 1);
+                }
+
+                let newLogs = [...dailyLogs];
+
+                for (let dateStr of datesToPlan) {
+                    if (new Date(dateStr).getDay() === 0 || new Date(dateStr).getDay() === 6) continue;
+
+                    newLogs = newLogs.filter(l => !(l.type === 'AM' && l.date === dateStr && l.note && l.note.startsWith('Généré Auto')));
+
+                    if (mode === 'strict') {
+                        ams.forEach(am => {
+                            let arrival = null;
+                            let departure = null;
+                            const amKids = kids.filter(k => k.amId === am.id);
+
+                            amKids.forEach(kid => {
+                                const sched = getActualScheduleForDay(kid.id, 'KID', dateStr);
+                                if (sched) {
+                                    if (!arrival || sched.start < arrival) arrival = sched.start;
+                                    if (!departure || sched.end > departure) departure = sched.end;
+                                }
+                            });
+
+                            if (arrival && departure) {
+                                newLogs.push({
+                                    id: Date.now() + Math.random(), date: dateStr, targetId: am.id, type: 'AM',
+                                    arrival, departure, isAbsent: false, note: 'Généré Auto (strict)'
+                                });
+                            } else {
+                                newLogs.push({
+                                    id: Date.now() + Math.random(), date: dateStr, targetId: am.id, type: 'AM',
+                                    isAbsent: true, arrival: '', departure: '', note: 'Généré Auto (Non requise)'
+                                });
+                            }
+                        });
+                    } else {
+                        // AMs réellement disponibles (non marquées absentes manuellement)
+                        const availableAms = ams.filter(am => {
+                            const manualLog = dailyLogs.find(l => l.targetId === am.id && l.type === 'AM' && l.date === dateStr && (!l.note || !l.note.startsWith('Généré Auto')));
+                            return !(manualLog && manualLog.isAbsent);
+                        });
+
+                        const hourlyAms = {};
+                        for (let h = 7; h <= 19; h++) {
+                            const presentKids = kids.filter(kid => {
+                                const sched = getActualScheduleForDay(kid.id, 'KID', dateStr);
+                                return (sched && h >= parseInt(sched.start) && h < parseInt(sched.end));
+                            });
+
+                            const localAmKids = {};
+                            availableAms.forEach(a => localAmKids[a.id] = 0);
+                            presentKids.forEach(k => { if (k.amId) localAmKids[k.amId] = (localAmKids[k.amId] || 0) + 1; });
+
+                            let simKids = presentKids.length;
+                            const sortedAms = [...availableAms].sort((a, b) => {
+                                if (localAmKids[b.id] !== localAmKids[a.id]) return localAmKids[b.id] - localAmKids[a.id];
+                                return b.capacity - a.capacity;
+                            });
+                            const assignedAms = [];
+
+                            for (let am of sortedAms) {
+                                if (simKids > 0) {
+                                    simKids -= am.capacity;
+                                    assignedAms.push(am.id);
+                                }
+                            }
+                            hourlyAms[h] = assignedAms;
+                        }
+
+                        availableAms.forEach(am => {
+                            let arrival = null;
+                            let departure = null;
+                            for (let h = 7; h <= 19; h++) {
+                                if (hourlyAms[h]?.includes(am.id)) {
+                                    if (arrival === null) arrival = `${h.toString().padStart(2, '0')}:00`;
+                                    departure = `${(h + 1).toString().padStart(2, '0')}:00`;
+                                }
+                            }
+
+                            if (arrival && departure) {
+                                newLogs.push({
+                                    id: Date.now() + Math.random(), date: dateStr, targetId: am.id, type: 'AM',
+                                    arrival, departure, isAbsent: false, note: 'Généré Auto (max)'
+                                });
+                            } else {
+                                newLogs.push({
+                                    id: Date.now() + Math.random(), date: dateStr, targetId: am.id, type: 'AM',
+                                    isAbsent: true, arrival: '', departure: '', note: 'Généré Auto (Non requise)'
+                                });
+                            }
+                        });
+                    }
+                }
+                setDailyLogs(newLogs);
+                setAutoPlanOptions({ ...autoPlanOptions, show: false });
+                alert("Planning AM généré et optimisé !");
+            };
+
+            const resetPlanning = () => {
+                const datesToReset = [];
+                let curr = new Date(autoPlanOptions.start);
+                const endPlan = new Date(autoPlanOptions.end);
+                while (curr <= endPlan) {
+                    datesToReset.push(curr.toISOString().split('T')[0]);
+                    curr.setDate(curr.getDate() + 1);
+                }
+                const newLogs = dailyLogs.filter(l => !(l.type === 'AM' && datesToReset.includes(l.date) && l.note && l.note.startsWith('Généré Auto')));
+                setDailyLogs(newLogs);
+                alert("Optimisations réinitialisées sur la période.");
+            };
+
+            const renderPersonRow = (person, type, bgClass) => (
+                <tr key={`${type}-${person.id}`} className="border-b hover:bg-emerald-50 transition-colors">
+                    <td className={`p-2 font-bold ${bgClass} border-r text-gray-800 sticky left-0 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]`} title={person.name}>
+                        <div className="truncate w-44">{person.name}</div>
+                    </td>
+                    {dates.map(dateStr => {
+                        const sched = getActualScheduleForDay(person.id, type, dateStr);
+                        const expectedSched = getExpectedSchedule(person.id, type, dateStr);
+                        let isModified = false;
+
+                        if (sched && !expectedSched) isModified = true;
+                        else if (!sched && expectedSched) isModified = true;
+                        else if (sched && expectedSched && (sched.start !== expectedSched.start || sched.end !== expectedSched.end)) isModified = true;
+
+                        let isDelegated = false;
+                        let delegateText = "";
+
+                        if (type === 'KID' && sched) {
+                            const referentAm = ams.find(a => a.id === person.amId);
+                            if (referentAm) {
+                                const referentSched = getActualScheduleForDay(referentAm.id, 'AM', dateStr);
+                                if (!referentSched || parseInt(sched.start) < parseInt(referentSched.start) || parseInt(sched.end) > parseInt(referentSched.end)) {
+                                    isDelegated = true;
+                                    delegateText = "Délégué";
+                                }
+                            }
+                        }
+
+                        let isOpti = false;
+                        if (type === 'AM') {
+                            const l = dailyLogs.find(log => log.targetId === person.id && log.type === 'AM' && log.date === dateStr);
+                            if (l && l.note && l.note.startsWith('Généré Auto')) isOpti = true;
+                        }
+
+                        let tdClass = `p-2 border-r align-middle`;
+                        if (isModified) tdClass += ` bg-yellow-100 border-yellow-300`;
+                        else if (isOpti) tdClass += ` bg-purple-50`;
+
+                        return (
+                            <td key={dateStr} className={tdClass}>
+                                {sched ? (
+                                    <div className="flex flex-col gap-1 items-center">
+                                        <div className="flex gap-1 items-center bg-white p-1 rounded shadow-sm border border-gray-200">
+                                            <input type="time" className="border-0 bg-transparent min-w-[70px] text-xs h-6 p-0 text-center font-bold outline-none cursor-pointer" value={sched.start} onChange={(e) => handleInlineUpdate(type, person.id, dateStr, 'arrival', e.target.value)} />
+                                            <span className="text-gray-400 font-bold">-</span>
+                                            <input type="time" className="border-0 bg-transparent min-w-[70px] text-xs h-6 p-0 text-center font-bold outline-none cursor-pointer" value={sched.end} onChange={(e) => handleInlineUpdate(type, person.id, dateStr, 'departure', e.target.value)} />
+                                        </div>
+                                        <button onClick={() => handleInlineUpdate(type, person.id, dateStr, 'isAbsent', true)} className="text-[10px] text-red-500 hover:underline pt-1">Indiquer Absent(e)</button>
+                                        {isDelegated && <div className="text-[10px] text-indigo-700 font-bold bg-indigo-100 px-1.5 py-0.5 rounded-full inline-block mt-1">🤝 {delegateText}</div>}
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col gap-1 items-center h-full justify-center text-gray-400 text-xs italic py-2">
+                                        Absent(e)
+                                        <button onClick={() => handleInlineUpdate(type, person.id, dateStr, 'isAbsent', false)} className="text-[10px] text-blue-500 not-italic hover:underline block mt-1">Saisir présence</button>
+                                    </div>
+                                )}
+                            </td>
+                        )
+                    })}
+                </tr>
+            );
+
+            return (
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <div className="flex justify-between items-center mb-6">
+                        <div>
+                            <div className="flex items-center gap-3">
+                                <h2 className="text-xl font-bold text-gray-800">🗓️ Planning Modifiable (Semaine)</h2>
+                                <button onClick={() => window.print()} className="bg-gray-100 hover:bg-gray-200 p-1.5 rounded shadow-sm text-xs border border-gray-200">🖨️ Imprimer</button>
+                            </div>
+                            <p className="text-sm text-gray-500">Vue prévisionnelle et réelle des présences.</p>
+                        </div>
+                        <div className="flex items-center gap-4">
+                            <button onClick={() => setAutoPlanOptions({ ...autoPlanOptions, show: !autoPlanOptions.show })} className="bg-purple-600 text-white px-3 py-2 rounded text-sm font-bold shadow hover:bg-purple-700 transition">✨ Planning automatique</button>
+                            <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+                                <button onClick={() => changeWeek(-1)} className="px-3 py-1 bg-white rounded shadow-sm font-bold hover:bg-gray-50 cursor-pointer">&lt; Préc</button>
+                                <input type="date" value={weekStart} onChange={(e) => setWeekStart(e.target.value)} className="border-0 bg-transparent p-1 font-medium text-center w-36 outline-none cursor-pointer" />
+                                <button onClick={() => changeWeek(1)} className="px-3 py-1 bg-white rounded shadow-sm font-bold hover:bg-gray-50 cursor-pointer">Suiv &gt;</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {autoPlanOptions.show && (
+                        <div className="bg-purple-50 p-4 rounded-xl border border-purple-200 mb-6 flex flex-wrap gap-4 shadow-inner fade-in items-end">
+                            <div>
+                                <label className="text-xs text-purple-700 font-bold mb-1 block">Du</label>
+                                <input type="date" className="border border-purple-300 p-2 rounded w-full text-sm bg-white" value={autoPlanOptions.start} onChange={e => setAutoPlanOptions({ ...autoPlanOptions, start: e.target.value })} />
+                            </div>
+                            <div>
+                                <label className="text-xs text-purple-700 font-bold mb-1 block">Au (inclus)</label>
+                                <input type="date" className="border border-purple-300 p-2 rounded w-full text-sm bg-white" value={autoPlanOptions.end} onChange={e => setAutoPlanOptions({ ...autoPlanOptions, end: e.target.value })} />
+                            </div>
+                            <div className="flex gap-2">
+                                <button onClick={() => generateAMSchedules('strict')} className="bg-purple-600 text-white px-3 py-2 rounded text-sm font-bold shadow hover:bg-purple-700 h-[38px] cursor-pointer">Auto Strict (Sans Délégations)</button>
+                                <button onClick={() => generateAMSchedules('max')} className="bg-fuchsia-600 text-white px-3 py-2 rounded text-sm font-bold shadow hover:bg-fuchsia-700 h-[38px] cursor-pointer">Auto Max (Avec Délégations)</button>
+                                <button onClick={resetPlanning} className="border border-red-500 text-red-600 bg-white px-3 py-2 rounded text-sm font-bold hover:bg-red-50 h-[38px] cursor-pointer">Retour à la normale ↺</button>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="overflow-x-auto border rounded-xl shadow-sm">
+                        <table className="w-full border-collapse text-sm bg-white">
+                            <thead>
+                                <tr className="bg-gray-100">
+                                    <th className="p-3 border-b border-r text-left w-48 font-bold text-gray-700 sticky left-0 z-10 bg-gray-100 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Personne</th>
+                                    {dates.map((d, i) => <th key={d} className="p-3 border-b border-r text-center font-bold text-gray-700">{JOURS[i]}<br /><span className="text-xs font-normal text-gray-500">{new Date(d).toLocaleDateString()}</span></th>)}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td colSpan="6" className="bg-rose-100 p-2 border-b border-r font-bold text-rose-800 text-xs uppercase tracking-wider text-center">👩‍🍼 Équipe MAM</td></tr>
+                                {ams.map(am => renderPersonRow(am, 'AM', 'bg-red-50'))}
+
+                                <tr><td colSpan="6" className="bg-blue-100 p-2 border-b border-r font-bold text-blue-800 text-xs uppercase tracking-wider text-center">👶 Enfants</td></tr>
+                                {kids.map(kid => renderPersonRow(kid, 'KID', 'bg-blue-50'))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            );
+        };
+
+        const PajemploiTab = ({ kids, ams, getActualScheduleForDay, dailyLogs }) => {
+            const [targetMonth, setTargetMonth] = useState(new Date().toISOString().slice(0, 7));
+
+            const recap = kids.map(kid => {
+                const referentAm = ams.find(a => a.id === kid.amId);
+                if (!referentAm) return null;
+                let daysPresent = 0; let hoursPresent = 0; let mealsTaken = 0;
+                const [y, m] = targetMonth.split('-');
+                const daysInMonth = new Date(y, m, 0).getDate();
+
+                for (let d = 1; d <= daysInMonth; d++) {
+                    const dateStr = `${y}-${m}-${d.toString().padStart(2, '0')}`;
+                    const sched = getActualScheduleForDay(kid.id, 'KID', dateStr);
+                    const log = dailyLogs.find(l => l.targetId === kid.id && l.type === 'KID' && l.date === dateStr);
+
+                    if (sched) {
+                        daysPresent++;
+                        hoursPresent += getHoursDiff(sched.start, sched.end);
+                        const midi = log && log.repasMidi !== undefined ? log.repasMidi : checkMealTime(sched.start, sched.end);
+                        const soir = log && log.repasSoir !== undefined ? log.repasSoir : false;
+                        if (midi) mealsTaken++;
+                        if (soir) mealsTaken++;
+                    }
+                }
+                const totalSalaireH = hoursPresent * referentAm.hourlyRate;
+                const totalIE = daysPresent * referentAm.maintenanceFee;
+                const totalIR = mealsTaken * referentAm.mealFee;
+                return { kid, referentAm, daysPresent, hoursPresent, mealsTaken, totalSalaireH, totalIE, totalIR };
+            }).filter(Boolean);
+
+            return (
+                <div className="space-y-6">
+                    <div className="flex items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                        <h2 className="text-xl font-bold text-gray-800">📄 Récapitulatif PAJEMPLOI & Parents</h2>
+                        <div className="flex gap-4 items-center">
+                            <input type="month" value={targetMonth} onChange={e => setTargetMonth(e.target.value)} className="border p-2 rounded text-lg font-bold" />
+                            <button onClick={() => window.print()} className="bg-gray-100 p-2 rounded text-sm shadow-sm hover:bg-gray-200 font-bold">🖨️ Imprimer</button>
+                        </div>
+                    </div>
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 overflow-x-auto">
+                        <table className="w-full text-left text-sm border-collapse">
+                            <thead><tr className="bg-gray-100 border-b"><th className="p-3">Enfant</th><th className="p-3">AM</th><th className="p-3 text-center">Jours</th><th className="p-3 text-center">Heures</th><th className="p-3 text-center">Repas</th><th className="p-3 text-right">Salaire</th><th className="p-3 text-right">IE</th><th className="p-3 text-right">IR</th><th className="p-3 text-right font-bold text-emerald-700">Total</th></tr></thead>
+                            <tbody>
+                                {recap.length === 0 ? <tr><td colSpan="9" className="p-4 text-center text-gray-500">Aucune donnée.</td></tr> :
+                                    recap.map(row => (
+                                        <tr key={row.kid.id} className="border-b hover:bg-gray-50">
+                                            <td className="p-3 font-bold">{row.kid.name}</td><td className="p-3 text-gray-600">{row.referentAm.name}</td>
+                                            <td className="p-3 text-center">{row.daysPresent}</td><td className="p-3 text-center">{row.hoursPresent.toFixed(1)}</td><td className="p-3 text-center">{row.mealsTaken}</td>
+                                            <td className="p-3 text-right">{row.totalSalaireH.toFixed(2)}€</td><td className="p-3 text-right">{row.totalIE.toFixed(2)}€</td><td className="p-3 text-right">{row.totalIR.toFixed(2)}€</td>
+                                            <td className="p-3 text-right font-bold text-emerald-700 bg-emerald-50">{(row.totalSalaireH + row.totalIE + row.totalIR).toFixed(2)} €</td>
+                                        </tr>
+                                    ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            );
+        };
+
+        const FinancesTab = ({ ams, expenses, setExpenses, getActualScheduleForDay }) => {
+            const [targetMonth, setTargetMonth] = useState(new Date().toISOString().slice(0, 7));
+            const [newExp, setNewExp] = useState({ title: '', amount: '' });
+            const monthExpenses = expenses.filter(e => e.date.startsWith(targetMonth));
+            const totalExpenses = monthExpenses.reduce((sum, e) => sum + e.amount, 0);
+            const [y, m] = targetMonth.split('-');
+            const daysInMonth = new Date(y, m, 0).getDate();
+
+            const amStats = ams.map(am => {
+                let hoursWorked = 0;
+                for (let d = 1; d <= daysInMonth; d++) {
+                    const dateStr = `${y}-${m}-${d.toString().padStart(2, '0')}`;
+                    const sched = getActualScheduleForDay(am.id, 'AM', dateStr);
+                    if (sched) hoursWorked += getHoursDiff(sched.start, sched.end);
+                }
+                return { ...am, hoursWorked };
+            });
+            const totalMAMHours = amStats.reduce((sum, a) => sum + a.hoursWorked, 0);
+
+            return (
+                <div className="space-y-6">
+                    <div className="flex items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                        <h2 className="text-xl font-bold text-gray-800">Partage des Charges :</h2>
+                        <div className="flex gap-4 items-center">
+                            <input type="month" value={targetMonth} onChange={e => setTargetMonth(e.target.value)} className="border p-2 rounded font-bold text-blue-600 bg-blue-50" />
+                            <button onClick={() => window.print()} className="bg-gray-100 p-2 rounded text-sm shadow-sm hover:bg-gray-200 font-bold">🖨️ Imprimer</button>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                            <h3 className="text-lg font-bold text-gray-800 mb-4">Répartition Équitable (Heures Réelles)</h3>
+                            <table className="w-full text-left text-sm">
+                                <thead><tr className="border-b text-gray-500"><th className="pb-2">AM</th><th className="pb-2">Heures</th><th className="pb-2">Quote-Part</th><th className="pb-2 text-right">À Payer</th></tr></thead>
+                                <tbody>
+                                    {amStats.map(am => {
+                                        const ratio = totalMAMHours > 0 ? (am.hoursWorked / totalMAMHours) : 0;
+                                        const toPay = totalExpenses * ratio;
+                                        return <tr key={am.id} className="border-b"><td className="py-3 font-bold">{am.name}</td><td className="py-3">{am.hoursWorked.toFixed(1)}h</td><td className="py-3 text-gray-600">{(ratio * 100).toFixed(1)}%</td><td className="py-3 text-right font-bold text-blue-600">{toPay.toFixed(2)} €</td></tr>
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                            <h3 className="text-lg font-bold text-gray-800 mb-4">Factures du mois</h3>
+                            <div className="flex gap-2 mb-4">
+                                <input type="text" placeholder="Intitulé" className="border p-2 rounded w-1/2" value={newExp.title} onChange={e => setNewExp({ ...newExp, title: e.target.value })} />
+                                <input type="number" placeholder="Montant €" className="border p-2 rounded w-1/3" value={newExp.amount} onChange={e => setNewExp({ ...newExp, amount: parseFloat(e.target.value) })} />
+                                <button className="bg-blue-600 text-white px-3 rounded hover:bg-blue-700" onClick={() => { if (newExp.title && newExp.amount) { setExpenses([...expenses, { id: Date.now(), date: `${targetMonth}-01`, title: newExp.title, amount: newExp.amount }]); setNewExp({ title: '', amount: '' }); } }}>+</button>
+                            </div>
+                            <div className="max-h-64 overflow-y-auto"><table className="w-full text-left text-sm"><tbody>{monthExpenses.map(e => (<tr key={e.id} className="border-b bg-gray-50"><td className="p-2">{e.title}</td><td className="p-2 font-bold">{e.amount.toFixed(2)} €</td><td className="p-2 text-right"><button onClick={() => setExpenses(expenses.filter(x => x.id !== e.id))} className="text-red-500">&times;</button></td></tr>))}</tbody></table></div>
+                            <div className="mt-4 text-right text-lg font-bold">Total : <span className="text-blue-600">{totalExpenses.toFixed(2)} €</span></div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- COMPOSANT PRINCIPAL APP ---
+        function App() {
+            const [ams, setAms] = useState([]);
+            const [kids, setKids] = useState([]);
+            const [contracts, setContracts] = useState([]);
+            const [expenses, setExpenses] = useState([]);
+            const [dailyLogs, setDailyLogs] = useState([]);
+            const [activeTab, setActiveTab] = useState('dashboard');
+            const [saveIndicator, setSaveIndicator] = useState('');
+            const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+            useEffect(() => {
+                const savedData = localStorage.getItem('mam_erp_v16'); // Updated Key
+                if (savedData) {
+                    const p = JSON.parse(savedData);
+                    setAms(p.ams || []); setKids(p.kids || []); setContracts(p.contracts || []);
+                    setExpenses(p.expenses || []); setDailyLogs(p.dailyLogs || []);
+                }
+                const authYear = localStorage.getItem('mam_auth_year');
+                const currentYear = new Date().getFullYear();
+                if (authYear && (parseInt(authYear) === currentYear || parseInt(authYear) === currentYear + 1)) {
+                    setIsAuthenticated(true);
+                }
+            }, []);
+
+            useEffect(() => {
+                const data = { ams, kids, contracts, expenses, dailyLogs };
+                localStorage.setItem('mam_erp_v16', JSON.stringify(data)); // Updated Key
+                setSaveIndicator('save-flash');
+                const timer = setTimeout(() => setSaveIndicator('text-emerald-500'), 1000);
+                return () => clearTimeout(timer);
+            }, [ams, kids, contracts, expenses, dailyLogs]);
+
+            const handleLogin = (validYear) => {
+                localStorage.setItem('mam_auth_year', validYear);
+                setIsAuthenticated(true);
+            };
+
+            const getExpectedSchedule = (targetId, type, dateStr) => {
+                const targetContracts = contracts.filter(c => c.targetId === targetId && c.type === type);
+                if (!targetContracts.length) return null;
+                const date = new Date(dateStr);
+                const dayOfWeek = date.getDay();
+                const adjustedDay = dayOfWeek === 0 ? 7 : dayOfWeek;
+                const weekNum = getWeekNumber(date);
+                for (let c of targetContracts) {
+                    if (dateStr >= c.startDate && dateStr <= c.endDate) {
+                        if (c.recurrence === 'even' && weekNum % 2 !== 0) continue;
+                        if (c.recurrence === 'odd' && weekNum % 2 === 0) continue;
+                        const dayConfig = c.days[adjustedDay];
+                        if (dayConfig && dayConfig.active) return { start: dayConfig.start, end: dayConfig.end };
+                    }
+                }
+                return null;
+            };
+
+            const getActualScheduleForDay = (targetId, type, dateStr) => {
+                const log = dailyLogs.find(l => l.targetId === targetId && l.type === type && l.date === dateStr);
+                if (log) {
+                    if (log.isAbsent) return null;
+                    if (log.arrival || log.departure) return { start: log.arrival || '08:00', end: log.departure || '18:00' };
+
+                    const exp = getExpectedSchedule(targetId, type, dateStr);
+                    if (exp) return exp;
+                    return { start: '08:00', end: '18:00' };
+                }
+                return getExpectedSchedule(targetId, type, dateStr);
+            };
+
+            const checkPresenceExpectedOnly = (targetId, type, dateStr, hour) => {
+                const sched = getExpectedSchedule(targetId, type, dateStr);
+                return (sched && hour >= parseInt(sched.start) && hour < parseInt(sched.end));
+            };
+
+            const checkPresenceGlobal = (targetId, type, dateStr, hour) => {
+                const sched = getActualScheduleForDay(targetId, type, dateStr);
+                return (sched && hour >= parseInt(sched.start) && hour < parseInt(sched.end));
+            };
+
+            const downloadBackup = () => {
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ ams, kids, contracts, expenses, dailyLogs }));
+                const dl = document.createElement('a');
+                dl.setAttribute("href", dataStr);
+                dl.setAttribute("download", "mam_sauvegarde_" + new Date().toISOString().split('T')[0] + ".json");
+                document.body.appendChild(dl); dl.click(); dl.remove();
+            };
+
+            const handleImport = (e) => {
+                const file = e.target.files[0]; if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    try { const p = JSON.parse(ev.target.result); if (p.ams) { setAms(p.ams); setKids(p.kids); setContracts(p.contracts); setExpenses(p.expenses); setDailyLogs(p.dailyLogs || []); alert("Données restaurées !"); } } catch (err) { alert("Fichier invalide."); }
+                }; reader.readAsText(file);
+            };
+
+            if (!isAuthenticated) return <LoginScreen onLogin={handleLogin} />;
+
+            const menuItems = [
+                { id: 'dashboard', icon: '📊', label: 'Accueil & Sauvegardes' },
+                { id: 'config', icon: '👩‍🍼', label: 'Équipe & Tarifs' },
+                { id: 'contracts', icon: '📝', label: 'Contrats Théoriques' },
+                { id: 'annual', icon: '📅', label: 'Vues Annuelles' },
+                { id: 'tracking', icon: '✅', label: 'Pointage Quotidien' },
+                { id: 'planning', icon: '🗓️', label: 'Planning Réel (Semaine)' },
+                { id: 'delegations', icon: '🤝', label: 'Registre des Délégations' },
+                { id: 'pajemploi', icon: '📄', label: 'Fiches Pajemploi' },
+                { id: 'finances', icon: '💰', label: 'Charges MAM' }
+            ];
+
+            return (
+                <div className="flex h-screen overflow-hidden">
+                    <div className="w-64 bg-gray-900 text-white flex flex-col shadow-xl z-10 flex-shrink-0">
+                        <div className="p-5 border-b border-gray-800">
+                            <h1 className="text-2xl font-black text-emerald-400">MAM Manager</h1>
+                            <p className="text-xs text-gray-400 mt-1">Communauté de Communes Marches du Velay Rochebaron</p>
+                        </div>
+                        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto hide-scrollbar">
+                            {menuItems.map(tab => (
+                                <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === tab.id ? 'bg-emerald-600 text-white' : 'text-gray-300 hover:bg-gray-800'}`}>
+                                    <span className="text-lg">{tab.icon}</span><span className="font-medium text-sm">{tab.label}</span>
+                                </button>
+                            ))}
+                        </nav>
+                        <div className="p-4 border-t border-gray-800 bg-gray-900 text-xs flex justify-between items-center">
+                            <div className={`flex items-center gap-2 font-semibold ${saveIndicator === 'save-flash' ? 'save-flash' : 'text-emerald-500'}`}>
+                                <div className="w-2 h-2 rounded-full bg-current"></div> Sauvegarde Auto
+                            </div>
+                            <button onClick={() => { localStorage.removeItem('mam_auth_year'); setIsAuthenticated(false); }} className="text-gray-500 hover:text-red-400 font-bold" title="Se déconnecter">
+                                🔌 Quitter
+                            </button>
+                        </div>
+                    </div>
+                    <div className="flex-1 overflow-y-auto hide-scrollbar p-6">
+                        {activeTab === 'dashboard' && <DashboardTab ams={ams} kids={kids} contracts={contracts} handleExport={downloadBackup} handleImport={handleImport} />}
+                        {activeTab === 'config' && <ConfigTab ams={ams} setAms={setAms} kids={kids} setKids={setKids} />}
+                        {activeTab === 'contracts' && <ContractsTab ams={ams} kids={kids} contracts={contracts} setContracts={setContracts} />}
+                        {activeTab === 'annual' && <AnnualViewTab ams={ams} kids={kids} checkPresenceGlobal={checkPresenceGlobal} checkPresenceExpectedOnly={checkPresenceExpectedOnly} />}
+                        {activeTab === 'tracking' && <CompactTrackingTab ams={ams} kids={kids} dailyLogs={dailyLogs} setDailyLogs={setDailyLogs} getExpectedSchedule={getExpectedSchedule} />}
+                        {activeTab === 'planning' && <PlanningTab ams={ams} kids={kids} getActualScheduleForDay={getActualScheduleForDay} getExpectedSchedule={getExpectedSchedule} dailyLogs={dailyLogs} setDailyLogs={setDailyLogs} />}
+                        {activeTab === 'delegations' && <DelegationsTab ams={ams} kids={kids} getActualScheduleForDay={getActualScheduleForDay} />}
+                        {activeTab === 'pajemploi' && <PajemploiTab kids={kids} ams={ams} getActualScheduleForDay={getActualScheduleForDay} dailyLogs={dailyLogs} />}
+                        {activeTab === 'finances' && <FinancesTab ams={ams} expenses={expenses} setExpenses={setExpenses} getActualScheduleForDay={getActualScheduleForDay} />}
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+
+</html>
